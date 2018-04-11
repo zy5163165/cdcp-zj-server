@@ -6,9 +6,12 @@ import com.alcatelsbell.cdcp.server.RelationDataNotFoundException;
 import com.alcatelsbell.cdcp.server.adapters.AbstractDBFLoader;
 import com.alcatelsbell.cdcp.server.adapters.MigrateUtil;
 import com.alcatelsbell.cdcp.util.*;
+import com.alcatelsbell.nms.common.Detect;
 import com.alcatelsbell.nms.common.SysUtil;
 import com.alcatelsbell.nms.util.log.LogUtil;
 import com.alcatelsbell.nms.valueobject.BObject;
+
+import org.apache.commons.lang.StringUtils;
 import org.asb.mule.probe.framework.entity.*;
 import org.asb.mule.probe.framework.service.Constant;
 
@@ -445,6 +448,19 @@ public class FHOTNM2000Migrator extends AbstractDBFLoader {
 
 
         try {
+        	List<IPCrossconnection> ccList = this.sd.queryAll(IPCrossconnection.class);
+        	HashMap<String, List<IPCrossconnection>> ccMap = new HashMap<String, List<IPCrossconnection>>();
+            if (Detect.notEmpty(ccList)) {
+            	getLogger().info("IPCrossconnection size = " + ccList.size());
+            	for (IPCrossconnection cc : ccList) {
+            		DSUtil.putIntoValueList(ccMap, cc.getParentDn(), cc);
+            	}
+            }
+            else {
+            	getLogger().info("IPCrossconnection size = 0");
+            }
+            getLogger().info("IPMap size = " + ccMap.size());
+        	
             List<FlowDomainFragment> flowDomainFragments = sd.queryAll(FlowDomainFragment.class);
             HashMap<String, FlowDomainFragment> tunnelmap = new HashMap<String, FlowDomainFragment>();
             HashMap<String, FlowDomainFragment> pwmap = new HashMap<String, FlowDomainFragment>();
@@ -504,7 +520,7 @@ public class FHOTNM2000Migrator extends AbstractDBFLoader {
                         if (pwTrail == null) {
 							if (pwTrailID.contains(",")) {
 								try {
-									processMutiPWS(pwTrailID,cpwe3,pwmap,cpwes,cpwe3_pws);
+									processMutiPWS(pwTrailID,cpwe3,pwmap,cpwes,cpwe3_pws,ccMap);
 								} catch (Exception e) {
 									logger.error(e, e);
 								}
@@ -538,6 +554,51 @@ public class FHOTNM2000Migrator extends AbstractDBFLoader {
                             getLogger().error("PW do not match PWE3: pwe3=" + cpwe3.getDn());
                             continue;
                         }
+                        
+                        //20180323 Etree伪线问题
+            			if ("FDFRT_POINT_TO_MULTIPOINT".equals(cpwe3.getFdfrType())) {
+            				String aEnd = pwTrail.getaEnd();
+            				String zEnd = pwTrail.getzEnd();
+
+            				List<IPCrossconnection> ipList = ccMap.get(cpwe3.getDn());
+            				getLogger().info("pwe3 dn:" + cpwe3.getDn() + "; ipList size=" + ipList.size());
+            				// 先改A端
+            				for (IPCrossconnection ip : ipList) {
+            					if ((aEnd.equals(ip.getaEnd())) && (ip.getzEnd().contains("/ethernet"))) {
+            						aptp = ip.getzEnd();
+            						if (StringUtils.indexOf(aptp, "@CTP") > StringUtils.indexOf(aptp, "@PTP")) {
+            							aptp = StringUtils.substringBefore(aptp, "@CTP");
+            						}
+            						break;
+            					}
+            					if ((aEnd.equals(ip.getzEnd())) && (ip.getaEnd().contains("/ethernet"))) {
+            						aptp = ip.getaEnd();
+            						if (StringUtils.indexOf(aptp, "@CTP") > StringUtils.indexOf(aptp, "@PTP")) {
+            							aptp = StringUtils.substringBefore(aptp, "@CTP");
+            						}
+            						break;
+            					}
+            				}
+            				// 再改Z端
+            				for (IPCrossconnection ip : ipList) {
+            					if ((zEnd.equals(ip.getaEnd())) && (ip.getzEnd().contains("/ethernet"))) {
+            						zptp = ip.getzEnd();
+            						if (StringUtils.indexOf(zptp, "@CTP") > StringUtils.indexOf(zptp, "@PTP")) {
+            							zptp = StringUtils.substringBefore(zptp, "@CTP");
+            						}
+            						break;
+            					}
+            					if ((zEnd.equals(ip.getzEnd())) && (ip.getaEnd().contains("/ethernet"))) {
+            						zptp = ip.getaEnd();
+            						if (StringUtils.indexOf(zptp, "@CTP") > StringUtils.indexOf(zptp, "@PTP")) {
+            							zptp = StringUtils.substringBefore(zptp, "@CTP");
+            						}
+            						break;
+            					}
+            				}
+
+            			}
+                        
                         CPW cpw = transCPW(pwTrail, aptp, zptp);
                         cpw.setAvlanId(cpwe3.getAvlanId());
                         cpw.setZvlanId(cpwe3.getZvlanId());
@@ -856,7 +917,7 @@ public class FHOTNM2000Migrator extends AbstractDBFLoader {
 		return null;
 	}
 
-	private void processMutiPWS(String pwIds,CPWE3 cpwe3,HashMap<String, FlowDomainFragment> pwmap,List cpwes,List cpwe3_pws) {
+	private void processMutiPWS(String pwIds,CPWE3 cpwe3,HashMap<String, FlowDomainFragment> pwmap,List cpwes,List cpwe3_pws,HashMap<String, List<IPCrossconnection>> ccMap) {
 		String[] pwids = pwIds.split(",");
 		if (pwIds.contains("|"))
 			pwids = pwIds.split("\\|");
@@ -903,6 +964,50 @@ public class FHOTNM2000Migrator extends AbstractDBFLoader {
 			//	aptp =  pwTrail.getaPtp();
 			//	zptp =  pwTrail.getzPtp();
 			//}
+			
+			//20180323 Etree伪线问题
+			if ("FDFRT_POINT_TO_MULTIPOINT".equals(cpwe3.getFdfrType())) {
+				String aEnd = pwTrail.getaEnd();
+				String zEnd = pwTrail.getzEnd();
+
+				List<IPCrossconnection> ipList = ccMap.get(cpwe3.getDn());
+				getLogger().info("pwe3 dn:" + cpwe3.getDn() + "; ipList size=" + ipList.size());
+				// 先改A端
+				for (IPCrossconnection ip : ipList) {
+					if ((aEnd.equals(ip.getaEnd())) && (ip.getzEnd().contains("/ethernet"))) {
+						aptp = ip.getzEnd();
+						if (StringUtils.indexOf(aptp, "@CTP") > StringUtils.indexOf(aptp, "@PTP")) {
+							aptp = StringUtils.substringBefore(aptp, "@CTP");
+						}
+						break;
+					}
+					if ((aEnd.equals(ip.getzEnd())) && (ip.getaEnd().contains("/ethernet"))) {
+						aptp = ip.getaEnd();
+						if (StringUtils.indexOf(aptp, "@CTP") > StringUtils.indexOf(aptp, "@PTP")) {
+							aptp = StringUtils.substringBefore(aptp, "@CTP");
+						}
+						break;
+					}
+				}
+				// 再改Z端
+				for (IPCrossconnection ip : ipList) {
+					if ((zEnd.equals(ip.getaEnd())) && (ip.getzEnd().contains("/ethernet"))) {
+						zptp = ip.getzEnd();
+						if (StringUtils.indexOf(zptp, "@CTP") > StringUtils.indexOf(zptp, "@PTP")) {
+							zptp = StringUtils.substringBefore(zptp, "@CTP");
+						}
+						break;
+					}
+					if ((zEnd.equals(ip.getzEnd())) && (ip.getaEnd().contains("/ethernet"))) {
+						zptp = ip.getaEnd();
+						if (StringUtils.indexOf(zptp, "@CTP") > StringUtils.indexOf(zptp, "@PTP")) {
+							zptp = StringUtils.substringBefore(zptp, "@CTP");
+						}
+						break;
+					}
+				}
+
+			}
 
 			if (a_long)
 				cpwe3.setAptp("");
