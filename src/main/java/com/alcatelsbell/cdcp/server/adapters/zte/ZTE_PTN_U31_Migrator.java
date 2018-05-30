@@ -20,6 +20,7 @@ import com.alcatelsbell.nms.util.log.LogUtil;
 import com.alcatelsbell.nms.valueobject.BObject;
 
 import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.asb.mule.probe.framework.entity.*;
@@ -229,11 +230,36 @@ public class ZTE_PTN_U31_Migrator extends AbstractDBFLoader {
                 // List<CPWE3> cpwe3s = new ArrayList<CPWE3>();
             	List<R_FTP_PTP> allFtpPtps = sd.query("select c from R_FTP_PTP c ", 0, 100000);
 				getLogger().info("allFtpPtps size : " + allFtpPtps.size());
+				List<CTP> ctps = sd.queryAll(CTP.class);
+				HashMap<String, CTP> ctpMap = new HashMap<String, CTP>();
+				if (Detect.notEmpty(ctps)) {
+					for (CTP ctp : ctps) {
+						ctpMap.put(ctp.getDn(), ctp);
+					}
+				}
+				getLogger().info("ctpMap size : " + ctpMap.size());
                 for (FlowDomainFragment fdf : pwe3s) {
                     if (idx++ % 1000 == 0)
                         getLogger().info("flowDomainFragments:" + idx);
                     CPWE3 cpwe3 = null;
                     try {
+                    	String aend = StringUtils.substringBefore(fdf.getaEnd(), "/VId");
+                    	String zend = StringUtils.substringBefore(fdf.getzEnd(), "/VId");
+                    	CTP aendCtp = ctpMap.get(aend);
+                    	CTP zendCtp = ctpMap.get(zend);
+                    	if (aendCtp != null) {
+                    		String aendTrans = aendCtp.getTransmissionParams();
+                    		fdf.setaEndTrans(aendTrans);
+                    	} else {
+                    		getLogger().info(fdf.getDn() + "aend not found!");
+                    	}
+                    	if (zendCtp != null) {
+                    		String zendTrans = zendCtp.getTransmissionParams();
+                    		fdf.setzEndtrans(zendTrans);
+                    	} else {
+                    		getLogger().info(fdf.getDn() + "zend not found!");
+                    	}
+                    	
                         cpwe3 = transFDF(fdf);
                         cpwe3.setSid(DatabaseUtil.nextSID(cpwe3));
                         cpwe3s.add(cpwe3);
@@ -541,8 +567,8 @@ public class ZTE_PTN_U31_Migrator extends AbstractDBFLoader {
         if (pir != null && !pir.equals("10000"))
             des.setPir(pir + "M");
 
-        String avid = at.get("VLANID");
-        String zvid = zt.get("VLANID");
+        String avid = at.get("svlan");
+        String zvid = zt.get("svlan");
         des.setAvlanId(avid);
         des.setZvlanId(zvid);
         return des;
