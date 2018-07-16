@@ -187,8 +187,9 @@ public class HWU2000DBFMigrator extends AbstractDBFLoader {
 		if (cptp.getParentDn() == null || cptp.getParentDn().isEmpty()) {
 			cptp.setParentDn(ptp.getParentDn());
 		}
-		// ZJ-U2000-1-PTN的端口parentDN不进行拼装。
-		if ("ZJ-U2000-1-PTN".equals(ptp.getEmsName())) {
+		// 20180626----ZJ-U2000-1-PTN的端口parentDN不进行拼装。
+		// 20180716----该修改只针对FTP
+		if ("ZJ-U2000-1-PTN".equals(ptp.getEmsName()) && ptp.getDn().contains("FTP")) {
 			cptp.setParentDn(ptp.getParentDn());
 		}
 
