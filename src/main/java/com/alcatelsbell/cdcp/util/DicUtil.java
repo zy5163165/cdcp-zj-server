@@ -254,6 +254,7 @@ public class DicUtil {
 		return -1;
 	}
 
+	// 点数据
 	public static int getConnectionDirection(String dir) {
 		if (dir.equals("CD_UNI"))
 			return DicConst.CONNECTION_DIRECTION_UNI;
@@ -261,6 +262,22 @@ public class DicUtil {
 			return DicConst.CONNECTION_DIRECTION_CD_BI;
 		return -1;
 	}
+	// 线数据和点数据的direction是不一样的
+	public static int getCtpDirection(String dir) {
+		if (dir.equals("CD_UNI"))
+			return 1;
+		if (dir.equals("CD_BI"))
+			return 3;
+		return -1;
+	}
+	public static String getRateWithoutNA(String dir) {
+		String rate = "";
+		if (!"NA".equals(dir)) {
+			rate = dir;
+		}
+		return rate;
+	}
+	
 
 	public static List<Integer> convertLayerRateList(String layerRates) {
 		List<Integer> list = new ArrayList<Integer>();

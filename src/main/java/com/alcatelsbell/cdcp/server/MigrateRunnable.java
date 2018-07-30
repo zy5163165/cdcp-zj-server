@@ -283,6 +283,9 @@ public class MigrateRunnable implements Runnable {
 						else
 							loader = new FHOTNM2000OTNMigrator(file.getAbsolutePath(),emsdn);
 					}
+					else if (ems.getTag1() != null && (ems.getTag1().equalsIgnoreCase("NewOTN"))) {
+						loader = new FHOTNM2000OTNnewMigrator(file.getAbsolutePath(),emsdn);
+					}
 					else
 						loader = new FHOTNM2000Migrator(file.getAbsolutePath(), emsdn);
 
@@ -363,6 +366,9 @@ public class MigrateRunnable implements Runnable {
 							loader = new FHOTNM2000OTN2Migrator(serializable,emsdn);
 						else
 							loader = new FHOTNM2000OTNMigrator(serializable,emsdn);
+					}
+					else if (ems.getTag1() != null && (ems.getTag1().equalsIgnoreCase("NewOTN"))) {
+						loader = new FHOTNM2000OTNnewMigrator(serializable,emsdn);
 					}
 					else
 						loader = new FHOTNM2000Migrator(serializable, emsdn);

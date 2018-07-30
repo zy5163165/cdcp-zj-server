@@ -8,6 +8,7 @@ import com.alcatelsbell.cdcp.server.adapters.fenghuootnm2000.FHOTNM2000Migrator;
 import com.alcatelsbell.cdcp.server.adapters.fenghuootnm2000.FHOTNM2000OTN2Migrator;
 import com.alcatelsbell.cdcp.server.adapters.fenghuootnm2000.FHOTNM2000OTN3Migrator;
 import com.alcatelsbell.cdcp.server.adapters.fenghuootnm2000.FHOTNM2000OTNMigrator;
+import com.alcatelsbell.cdcp.server.adapters.fenghuootnm2000.FHOTNM2000OTNnewMigrator;
 import com.alcatelsbell.cdcp.server.adapters.huaweiu2000.HWU2000DBFMigrator;
 import com.alcatelsbell.cdcp.server.adapters.huaweiu2000.HWU2000DWDMMigrator;
 import com.alcatelsbell.cdcp.server.adapters.huaweiu2000.HWU2000SDHMigrator;
@@ -374,6 +375,9 @@ public class CdcpServerUtil {
 						loader = new FHOTNM2000OTN2Migrator(neSections,emsdn);
 					else
 						loader = new FHOTNM2000OTNMigrator(neSections,emsdn);
+				}
+				else if (ems.getTag1() != null && (ems.getTag1().equalsIgnoreCase("NewOTN"))) {
+					loader = new FHOTNM2000OTNnewMigrator(neSections,emsdn);
 				}
 				else
 					loader = new FHOTNM2000Migrator(neSections, emsdn);

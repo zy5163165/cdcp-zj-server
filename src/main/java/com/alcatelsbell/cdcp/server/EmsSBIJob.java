@@ -9,6 +9,7 @@ import com.alcatelsbell.nms.modules.task.model.Schedule;
 import com.alcatelsbell.nms.valueobject.sys.Ems;
 import com.alcatelsbell.nms.valueobject.sys.SysNode;
 import org.apache.commons.httpclient.util.DateUtil;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.quartz.*;
@@ -75,6 +76,7 @@ public class EmsSBIJob implements Job {
         String[] dns = taskObjects.split("#");
         for (int i = 0; i < dns.length; i++) {
             String emsdn = dns[i];
+            emsdn = StringUtils.removeEnd(emsdn, "_bak");
             String serial = emsdn+"@"+ new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
 
 

@@ -167,6 +167,11 @@ public class DNUtil {
             return ctpDn.substring(ctpDn.indexOf("och=")+4);
         return null;
     }
+    public static String extractNewOCHno(String ctpDn) {
+        if (ctpDn.contains("OCH-"))
+            return ctpDn.substring(ctpDn.indexOf("OCH=")+4);
+        return null;
+    }
 
     public static void main(String[] args) throws Exception {
         System.out.println(DNUtil.extractPortDn("EMS:JXI-OTNM2000-1-P@ManagedElement:134232284;69898@FTP:/rack=603905/shelf=1/slot=17826833/port=36@CTP:/ethernet=139468865"));
