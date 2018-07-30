@@ -15,7 +15,7 @@ import java.util.Date;
  * rongrong.chen@alcatel-sbell.com.cn
  */
 @Entity
-@Table(name = "C_DEVICE")
+@Table(name = "C_DEVICE1")
 public class CDevice extends CdcpObject {
 	
 	@BField(description = "网元名称",searchType = BField.SearchType.NULLABLE)
