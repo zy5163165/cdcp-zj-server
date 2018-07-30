@@ -140,6 +140,26 @@
         <class>org.asb.mule.probe.framework.entity.StaticMacAddress</class>
         <class>org.asb.mule.probe.framework.entity.FlowDomain</class>
         <class>org.asb.mule.probe.framework.entity.ProtectionGroup</class>
+        
+        <class>org.asb.mule.probe.framework.entity.ONE</class>
+        <class>org.asb.mule.probe.framework.entity.OMC</class>
+        <class>org.asb.mule.probe.framework.entity.NEL</class>
+        <class>org.asb.mule.probe.framework.entity.EQH</class>
+        <class>org.asb.mule.probe.framework.entity.CRD</class>
+        <class>org.asb.mule.probe.framework.entity.PRT</class>
+        <class>org.asb.mule.probe.framework.entity.CTP2</class>
+        <class>org.asb.mule.probe.framework.entity.TPL</class>
+        <class>org.asb.mule.probe.framework.entity.SIF</class>
+        <class>org.asb.mule.probe.framework.entity.EPG</class>
+        <class>org.asb.mule.probe.framework.entity.EPU</class>
+        <class>org.asb.mule.probe.framework.entity.PTG</class>
+        <class>org.asb.mule.probe.framework.entity.PGU</class>
+        <class>org.asb.mule.probe.framework.entity.SBN</class>
+        <class>org.asb.mule.probe.framework.entity.SNN</class>
+        <class>org.asb.mule.probe.framework.entity.SNL</class>
+        <class>org.asb.mule.probe.framework.entity.SNT</class>
+        <class>org.asb.mule.probe.framework.entity.SNR</class>
+        
         <class>org.asb.mule.probe.framework.entity.TopoNode</class>
         <class>org.asb.mule.probe.framework.entity.ProtectionSubnetwork</class>
         <class>org.asb.mule.probe.framework.entity.ProtectionSubnetworkLink</class>
@@ -150,6 +170,7 @@
         <class>org.asb.mule.probe.framework.entity.HW_MSTPBindingPath</class>
         <class>org.asb.mule.probe.framework.entity.CrossConnect</class>
         <class>org.asb.mule.probe.framework.entity.TrailNtwProtection</class>
+        
 
         <!--<exclude-unlisted-classes>true</exclude-unlisted-classes>-->
         <properties>
