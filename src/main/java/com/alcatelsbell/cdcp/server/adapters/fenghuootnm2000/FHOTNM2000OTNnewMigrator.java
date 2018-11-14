@@ -958,7 +958,7 @@ public class FHOTNM2000OTNnewMigrator extends AbstractDBFLoader{
 											for (CChannel channel : channels) {
 												String aendCtp = channel.getAend();
 												String zendCtp = channel.getZend();
-												if (ctpList.contains(aendCtp) || ctpList.contains(zendCtp)) {
+												if (Detect.notEmpty(ctpList) && (ctpList.contains(aendCtp) || ctpList.contains(zendCtp))) {
 													//创建path_channels
 													CPath_Channel cpath_channel = new CPath_Channel();
 											        cpath_channel.setDn(SysUtil.nextDN());
@@ -1296,7 +1296,7 @@ public class FHOTNM2000OTNnewMigrator extends AbstractDBFLoader{
 									for (CChannel channel : channels) {
 										String aendCtp = channel.getAend();
 										String zendCtp = channel.getZend();
-										if (ctpList.contains(aendCtp) || ctpList.contains(zendCtp)) {
+										if (Detect.notEmpty(ctpList) && (ctpList.contains(aendCtp) || ctpList.contains(zendCtp))) {
 											//创建route_channels
 											CRoute_Channel croute_channel = createRouteChannel(dsr.getRmUID(), channel.getDn(), emsdn);
 									        route_channels.add(croute_channel);
@@ -1432,7 +1432,7 @@ public class FHOTNM2000OTNnewMigrator extends AbstractDBFLoader{
 
     public static void main(String[] args) throws Exception {
 //        List allObjects = JpaClient.getInstance("cdcp.datajpa").findAllObjects(CDevice.class);
-        String fileName=  "D:\\20180725.db";
+        String fileName=  "D:\\123.db";
         String emsdn = "ZJ-FH-1-OTN";
         if (args != null && args.length > 0)
             fileName = args[0];
