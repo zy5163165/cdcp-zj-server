@@ -10,6 +10,7 @@ import com.alcatelsbell.cdcp.server.adapters.SDHUtil;
 import com.alcatelsbell.cdcp.server.adapters.huaweiu2000.HwDwdmUtil;
 import com.alcatelsbell.cdcp.server.adapters.huaweiu2000.U2000MigratorUtil;
 import com.alcatelsbell.cdcp.util.*;
+import com.alcatelsbell.nms.common.Detect;
 import com.alcatelsbell.nms.common.SysUtil;
 import com.alcatelsbell.nms.db.components.service.DBUtil;
 import com.alcatelsbell.nms.db.components.service.JPASupport;
@@ -550,7 +551,7 @@ public class ALU_OTN_Migrator extends AbstractDBFLoader {
 
                 String location = getLocation(equipment.getAdditionalInfo());
 //                if (("1-"+ptp.getTag1()).startsWith(location+"-")) {
-                if (getLastThree(ptp.getTag1()).startsWith(getLastTwo(location)+"-")) {
+                if (Detect.notEmpty(getLastThree(ptp.getTag1())) && getLastThree(ptp.getTag1()).startsWith(getLastTwo(location)+"-")) {
                     cptp.setParentDn(equipment.getDn());
                     b = true;
                     break;
