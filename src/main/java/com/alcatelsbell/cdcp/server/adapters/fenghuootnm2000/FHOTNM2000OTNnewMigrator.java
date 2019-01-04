@@ -571,10 +571,10 @@ public class FHOTNM2000OTNnewMigrator extends AbstractDBFLoader{
         		des.setDn(cc.getRmUID());
         		des.setCollectTimepoint(cc.getCreateDate());
         		
-                des.setAptp(cc.getaEndPortrmUID1());
-                des.setZptp(cc.getzEndPortrmUID1());
-                des.setAend(cc.getaEndCtprmUID1());
-                des.setZend(cc.getzEndCtprmUID1());
+                des.setAptp(cc.getaEndPort1rmUID());
+                des.setZptp(cc.getzEndPort1rmUID());
+                des.setAend(cc.getaEndCtp1rmUID());
+                des.setZend(cc.getzEndCtp1rmUID());
                 
                 des.setParentDn(cc.getNermUID());
                 des.setEmsName(emsdn);
@@ -582,7 +582,7 @@ public class FHOTNM2000OTNnewMigrator extends AbstractDBFLoader{
                 
                 newCCs.add(des);
         		
-                String azctp = cc.getaEndCtprmUID1()+"-"+cc.getzEndCtprmUID1();
+                String azctp = cc.getaEndCtp1rmUID()+"-"+cc.getzEndCtp1rmUID();
                 DSUtil.putIntoValueList(azctp_sifMap, azctp, cc);
         	}
 
@@ -1073,16 +1073,16 @@ public class FHOTNM2000OTNnewMigrator extends AbstractDBFLoader{
 				CPath_CC cPath_cc = createPathCC(rmuid, sif.getRmUID(), emsdn);
 		        path_ccs.add(cPath_cc);
 		        
-		        DSUtil.putIntoValueList(ochUid_ccCtpMap, rmuid, sif.getaEndCtprmUID1());
-		        DSUtil.putIntoValueList(ochUid_ccCtpMap, rmuid, sif.getzEndCtprmUID1());
+		        DSUtil.putIntoValueList(ochUid_ccCtpMap, rmuid, sif.getaEndCtp1rmUID());
+		        DSUtil.putIntoValueList(ochUid_ccCtpMap, rmuid, sif.getzEndCtp1rmUID());
 			}
 			if ("DSR".equalsIgnoreCase(snl.getLayer())) {
 				// 创建route_ccs
 				CRoute_CC cRoute_cc = createRouteCC(rmuid, sif.getRmUID(), emsdn);
 				route_ccs.add(cRoute_cc);
 
-				DSUtil.putIntoValueList(dsrUid_ccCtpMap, rmuid, sif.getaEndCtprmUID1());
-				DSUtil.putIntoValueList(dsrUid_ccCtpMap, rmuid, sif.getzEndCtprmUID1());
+				DSUtil.putIntoValueList(dsrUid_ccCtpMap, rmuid, sif.getaEndCtp1rmUID());
+				DSUtil.putIntoValueList(dsrUid_ccCtpMap, rmuid, sif.getzEndCtp1rmUID());
 			}
 		}
 	}
