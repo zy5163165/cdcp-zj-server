@@ -17,6 +17,8 @@ import com.alcatelsbell.nms.db.components.service.JPASupport;
 import com.alcatelsbell.nms.db.components.service.JPASupportSpringImpl;
 import com.alcatelsbell.nms.db.components.service.JPAUtil;
 import com.alcatelsbell.nms.valueobject.BObject;
+
+import org.apache.commons.lang.StringUtils;
 import org.asb.mule.probe.framework.entity.*;
 import org.asb.mule.probe.framework.service.Constant;
 import org.asb.mule.probe.framework.util.FileLogger;
@@ -49,6 +51,8 @@ public class ALU_OTN_Migrator extends AbstractDBFLoader {
     HashMap<String,List<CCTP>> ptp_ctpMap = new HashMap<String, List<CCTP>>();
     List<CSection> cSections = new ArrayList<CSection>();
     HashMap<String,CEquipment> equipmentMap = new HashMap<String, CEquipment>();
+    
+    HashMap<String, String> deviceFunctionType = new HashMap<String, String>();
 
     private static FileLogger logger = new FileLogger("ALU-OTN-Device.log");
     public ALU_OTN_Migrator(Serializable object, String emsdn) {
@@ -128,6 +132,35 @@ public class ALU_OTN_Migrator extends AbstractDBFLoader {
 
     HashMap<String,Equipment> equipmentHashMap = null;
 
+    protected void migrateManagedElement() throws Exception {
+		if (!isTableHasData(ManagedElement.class))
+			return;
+		List<ManagedElement> meList = sd.queryAll(ManagedElement.class);
+		if (meList == null || meList.isEmpty()) {
+			getLogger().info("ManagedElement is empty, return");
+			return;
+		}
+
+		DataInserter di = new DataInserter(emsid);
+		executeDelete("delete  from CDevice c where c.emsName = '" + emsdn + "'", CDevice.class);
+
+		if (meList != null && meList.size() > 0) {
+			for (ManagedElement me : meList) {
+				CDevice device = transDevice(me);
+				device.setSid(DatabaseUtil.nextSID(device));
+                if(device.getAdditionalInfo().length() > 2000){
+                    device.setAdditionalInfo(null);
+                }
+                HashMap<String, String> additionalInfoMap = MigrateUtil.transMapValue(device.getAdditionalInfo());
+                if (additionalInfoMap != null && additionalInfoMap.containsKey("meFunctionType")) {
+                	deviceFunctionType.put(device.getDn(), additionalInfoMap.get("meFunctionType"));
+                }
+                
+				di.insert(device);
+			}
+		}
+		di.end();
+	}
 
     @Override
     protected void insertEquipmentHolders(List<EquipmentHolder> equipmentHolders) throws Exception {
@@ -185,9 +218,9 @@ public class ALU_OTN_Migrator extends AbstractDBFLoader {
                 equipmentHolder.setHolderType("slot");
                 slots.add(equipmentHolder);
             }
-//            else if (equipmentHolder.getHolderType().equals("sub_slot")) {
-//				subslots.add(equipmentHolder);
-//			}
+            else if (equipmentHolder.getHolderType().equals("sub_slot")) {
+				subslots.add(equipmentHolder);
+			}
         }
         // ////////////////// 将EH分类///////////////////
 
@@ -244,7 +277,7 @@ public class ALU_OTN_Migrator extends AbstractDBFLoader {
         CEquipment cEquipment = super.transEquipment(equipment);
         if (!cEquipment.getDn().contains("slot")) return null;
 
-        cEquipment.setNativeEMSName(equipment.getExpectedEquipmentObjectType());
+        cEquipment.setNativeEMSName(equipment.getNativeEMSName());
         String additionalInfo = equipment.getAdditionalInfo();
         if (additionalInfo.length() > 1500)
             cEquipment.setAdditionalInfo("");
@@ -521,6 +554,32 @@ public class ALU_OTN_Migrator extends AbstractDBFLoader {
 
         return null;
     }
+    private String getLast(String location, int num) {
+        String[] split = location.split("-");
+        if (num == 3 && split.length >= num) {
+            return split[split.length-3]+"-"+split[split.length-2]+"-"+split[split.length-1];
+        }
+        if (num == 4 && split.length >= num) {
+            return split[split.length-4]+"-"+split[split.length-3]+"-"+split[split.length-2]+"-"+split[split.length-1];
+        }
+
+        return location;
+    }
+    private String getFirst(String location, int num) {
+        String[] splits = location.split("-");
+        String str = "";
+        int i = 0;
+        for (String split : splits) {
+        	if (i==num) {
+        		break;
+        	}
+        	str = str + "-" +split;
+        	i++;
+        }
+
+        return StringUtils.removeStart(str, "-");
+    }
+    
     @Override
     public CPTP transPTP(PTP ptp) {
 //        if (ptp.getDn().equals("EMS:ZJ-ALU-1-OTN@ManagedElement:100/3@PTP:GBE10-1-1-1-2"))
@@ -528,39 +587,50 @@ public class ALU_OTN_Migrator extends AbstractDBFLoader {
 
         CPTP cptp = super.transPTP(ptp);
         cptp.setDeviceDn(ptp.getParentDn());
+        cptp.setParentDn(ptp.getParentDn());
         String dn = cptp.getDn();
-
-
 
         cptp.setNo(ptp.getDn().substring(ptp.getDn().indexOf("port=")+5));
         int i = dn.indexOf("/", dn.indexOf("slot="));
         String carddn = (dn.substring(0,i)+"@Equipment:1").replaceAll("PTP:","EquipmentHolder:")
                 .replaceAll("FTP:","EquipmentHolder:");
+        
+        if (ptp.getDn().contains("PTP")) {
+        	String ptpLocation = "";
+            String functionType = deviceFunctionType.get(cptp.getDeviceDn());
+            if (functionType.contains("PHN")) {
+            	ptpLocation = this.getLast(ptp.getNativeEMSName(), 3);
+            	ptpLocation = this.getFirst(ptpLocation, 2);
+            } else if (functionType.contains("OCS")) {
+            	ptpLocation = this.getLast(ptp.getNativeEMSName(), 4);
+            	ptpLocation = this.getFirst(ptpLocation, 3);
+            }
 
-
-        Collection<CEquipment> equipments = equipmentMap.values();
-        boolean b = false;
-        for (CEquipment equipment : equipments) {
-            if (equipment.getDn().startsWith(ptp.getParentDn()+"@")) {
-                if (!equipment.getDn().contains("slot="))
-                    continue;
-//                if (ptp.getNativeEMSName().contains(equipment.getNativeEMSName() + "-")) {
-//                    ptp.setParentDn(equipment.getDn());
-//                    b = true;
-//                }
-
-                String location = getLocation(equipment.getAdditionalInfo());
-//                if (("1-"+ptp.getTag1()).startsWith(location+"-")) {
-                if (Detect.notEmpty(getLastThree(ptp.getTag1())) && getLastThree(ptp.getTag1()).startsWith(getLastTwo(location)+"-")) {
-                    cptp.setParentDn(equipment.getDn());
-                    b = true;
-                    break;
+            Collection<CEquipment> equipments = equipmentMap.values();
+            
+        	boolean b = false;
+            for (CEquipment equipment : equipments) {
+                String cardLocation = "";
+                String[] split = ptpLocation.split("-");
+                if (functionType.contains("PHN")) {
+                	cardLocation = "/shelf=" + split[0] + "/slot=" + split[1] + "/";
+                } else if (functionType.contains("OCS")) {
+                	cardLocation = "/rack=" + split[0] + "/shelf=" + split[1] + "/slot=" + split[2] + "/";
+                }
+            	
+                if (equipment.getDn().startsWith(ptp.getParentDn()+"@")) {
+                    if (StringUtils.contains(equipment.getDn(), cardLocation)) {
+                        cptp.setParentDn(equipment.getDn());
+                        b = true;
+                        break;
+                    }
                 }
             }
+            if (!b) {
+                getLogger().error("Faild find carddn : ptp = "+ptp.getDn());
+            }
         }
-        if (!b) {
-            getLogger().error("Faild find carddn : ptp = "+ptp.getDn());
-        }
+        
         cptp.setNo("1-"+ptp.getTag1());
         if (cptp.getNo().contains("-"))
             cptp.setNo(cptp.getNo().substring(cptp.getNo().lastIndexOf("-")+1));
@@ -769,6 +839,7 @@ public class ALU_OTN_Migrator extends AbstractDBFLoader {
 
         List<CChannel> subWaveChannelList = new ArrayList<CChannel>();
         HashMap<String,List<CChannel>> och_subwaves = new HashMap<String, List<CChannel>>();
+        HashMap<String,List<CChannel>> noSubctpOchs = new HashMap<String, List<CChannel>>();
         List<CPath> cPaths = new ArrayList<CPath>();
         List<CRoute> cRoutes = new ArrayList<CRoute>();
         List<CRoute_CC> cRoute_ccs = new ArrayList<CRoute_CC>();
@@ -912,6 +983,7 @@ public class ALU_OTN_Migrator extends AbstractDBFLoader {
             cPath.setRateDesc("OCH");
             cPath.setCategory("OCH");
             List<CChannel> subwaves = new ArrayList<CChannel>();
+            List<CChannel> fakeSubwaves = new ArrayList<CChannel>();
             if (snc.getaEnd().contains("CTP")) {
                 CCTP actp = ctpMap.get(snc.getaEnd());
                 cPath.setFrequencies(actp == null ? null : actp.getFrequencies());
@@ -935,12 +1007,14 @@ public class ALU_OTN_Migrator extends AbstractDBFLoader {
                 if (actps != null && zctps != null)
                     subwaves = createSubwaveChannels(cPath, actps, zctps);
                 else {
+                	fakeSubwaves.add(createCChanellForDsr(cPath, snc.getaEnd(), snc.getzEnd()));
                     getLogger().error("无法找到子CTP snc = "+snc.getDn());
                 }
             }
 
             subWaveChannelList.addAll(subwaves);
             och_subwaves.put(snc.getDn(),subwaves);
+            noSubctpOchs.put(snc.getDn(),fakeSubwaves);
 
             List<R_TrafficTrunk_CC_Section> routes = routeMap.get(snc.getDn());
             if (routes == null || routes.isEmpty()) {
@@ -1032,9 +1106,6 @@ public class ALU_OTN_Migrator extends AbstractDBFLoader {
                 getLogger().error("无法找到 path-channel,snc="+snc.getDn());
         }
 
-        di2.insert(subWaveChannelList);
-        di2.end();
-
 
 
         for (SubnetworkConnection snc : dsrList) {
@@ -1089,8 +1160,15 @@ public class ALU_OTN_Migrator extends AbstractDBFLoader {
 
                 List<CChannel> ochChannels = och_subwaves.get(parentOchDn);
 
-                if (ochChannels == null) {
+                if (ochChannels == null || !Detect.notEmpty(ochChannels)) {
                     getLogger().error("Faild to find och_subwaves route :"+parentOchDn);
+                    ochChannels = noSubctpOchs.get(parentOchDn);
+                    if (ochChannels == null || !Detect.notEmpty(ochChannels)) {
+                    	getLogger().error("Faild to find noSubctpOchs route :"+parentOchDn);
+                    } else {
+                    	getLogger().info("Find noSubctpOchs route size = " + ochChannels.size());
+                    	subWaveChannelList.addAll(ochChannels);
+                    }
                 }
 
                 if ( ochChannels != null && ochChannels.size() == 1) {
@@ -1181,7 +1259,8 @@ public class ALU_OTN_Migrator extends AbstractDBFLoader {
 
         }
 
-
+        di2.insert(subWaveChannelList);
+        di2.end();
 
 
         DataInserter di = new DataInserter(emsid);
@@ -1535,6 +1614,32 @@ public class ALU_OTN_Migrator extends AbstractDBFLoader {
         cChannel.setEmsName(emsdn);
         return cChannel;
     }
+    private CChannel createCChanellForDsr(CPath path,String aftp, String zftp) {
+        CChannel cChannel = new CChannel();
+        cChannel.setDn(aftp + "<>" + zftp);
+        cChannel.setSid(DatabaseUtil.nextSID(CChannel.class));
+        cChannel.setAend(aftp);
+        cChannel.setZend(zftp);
+        cChannel.setSectionOrHigherOrderDn(path.getDn());
+        cChannel.setName(path.getName());
+        cChannel.setNo(DNUtil.extractOCHno(aftp));
+        cChannel.setRate(path.getRate());
+        cChannel.setCategory("子波道");
+        cChannel.setTmRate(path.getTmRate());
+        cChannel.setRateDesc(path.getRateDesc());
+//        cChannel.setFrequencies(acctp.getFrequencies());
+//        cChannel.setWaveLen( HwDwdmUtil.getWaveLength( (acctp.getFrequencies())));
+        cChannel.setDirection(DicConst.CONNECTION_DIRECTION_CD_BI);
+        cChannel.setAptp(aftp);
+        cChannel.setZptp(zftp);
+
+        CPTP aptp = ptpMap.get(aftp);
+        CPTP zptp = ptpMap.get(zftp);
+        if (aptp != null && zptp != null)
+            cChannel.setTag3(aptp.getTag3()+"-"+zptp.getTag3());
+        cChannel.setEmsName(emsdn);
+        return cChannel;
+    }
 
     private CSection createOMS( CPTP aptp, CPTP zptp) throws Exception {
         CSection section = new CSection();
@@ -1656,13 +1761,13 @@ public class ALU_OTN_Migrator extends AbstractDBFLoader {
 
 
     public static void main(String[] args) throws Exception {
+    	
+//    	ALU_OTN_Migrator loader1 = new ALU_OTN_Migrator("", ""){
+//        };
+//        loader1.execute();
+    	
         FileReader fr = new FileReader("c:\\1.txt");
         BufferedReader br = new BufferedReader(fr);
-        String s = br.readLine();
-        String[] split = s.split(" ");
-        for (String s1 : split) {
-            System.out.println(s1);
-        }
 
         String fileName=  "D:\\cdcpdb\\2015-08-12-111418-ZJ-ALU-1-OTN-DayMigration.db";
         String emsdn = "ZJ-ALU-1-OTN";
