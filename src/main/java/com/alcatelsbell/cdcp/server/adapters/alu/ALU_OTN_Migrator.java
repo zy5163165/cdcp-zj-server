@@ -154,6 +154,7 @@ public class ALU_OTN_Migrator extends AbstractDBFLoader {
                 HashMap<String, String> additionalInfoMap = MigrateUtil.transMapValue(device.getAdditionalInfo());
                 if (additionalInfoMap != null && additionalInfoMap.containsKey("meFunctionType")) {
                 	deviceFunctionType.put(device.getDn(), additionalInfoMap.get("meFunctionType"));
+                	getLogger().info(device.getDn() + "-deviceFunctionType:" + additionalInfoMap.get("meFunctionType"));
                 }
                 
 				di.insert(device);
@@ -610,15 +611,15 @@ public class ALU_OTN_Migrator extends AbstractDBFLoader {
             
         	boolean b = false;
             for (CEquipment equipment : equipments) {
-                String cardLocation = "";
-                String[] split = ptpLocation.split("-");
-                if (functionType.contains("PHN")) {
-                	cardLocation = "/shelf=" + split[0] + "/slot=" + split[1] + "/";
-                } else if (functionType.contains("OCS")) {
-                	cardLocation = "/rack=" + split[0] + "/shelf=" + split[1] + "/slot=" + split[2] + "/";
-                }
-            	
                 if (equipment.getDn().startsWith(ptp.getParentDn()+"@")) {
+                	String cardLocation = "";
+                    String[] split = ptpLocation.split("-");
+                    if (functionType.contains("PHN")) {
+                    	cardLocation = "/shelf=" + split[0] + "/slot=" + split[1] + "@";
+                    } else if (functionType.contains("OCS")) {
+                    	cardLocation = "/rack=" + split[0] + "/shelf=" + split[1] + "/slot=" + split[2] + "@";
+                    }
+                	
                     if (StringUtils.contains(equipment.getDn(), cardLocation)) {
                         cptp.setParentDn(equipment.getDn());
                         b = true;
