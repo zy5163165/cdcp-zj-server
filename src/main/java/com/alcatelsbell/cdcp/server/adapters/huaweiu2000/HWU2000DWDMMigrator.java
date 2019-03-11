@@ -741,6 +741,10 @@ public class HWU2000DWDMMigrator extends AbstractDBFLoader{
                 else if (rate.equals(DicConst.LR_OCH_Data_Unit_3+"")) {
                     dsrList.add(snc);
                 }
+                
+                else if (rate.equals(DicConst.LR_DSR_OTU4_Ethernet_WAN+"")) { //8043
+                    dsrList.add(snc);
+                }
                 else {
                     getLogger().error("unkonwn rate dsr : "+snc.getRate());
                 }

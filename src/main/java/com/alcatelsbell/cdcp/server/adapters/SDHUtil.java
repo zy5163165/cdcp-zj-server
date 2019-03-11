@@ -239,6 +239,9 @@ public class SDHUtil {
         else if (rate == DicConst.LR_OCH_Transport_Unit_3) {
             return "40G";
         }
+        else if (rate == DicConst.LR_DSR_OTU4_Ethernet_WAN){ //huawei OTU4 8043
+            return "100G";
+        }
 
         else if (rate == DicConst.LR_DSR_10Gigabit_Ethernet){
             return "10G";
