@@ -278,7 +278,7 @@ public class ALU_OTN_Migrator extends AbstractDBFLoader {
         CEquipment cEquipment = super.transEquipment(equipment);
         if (!cEquipment.getDn().contains("slot")) return null;
 
-        cEquipment.setNativeEMSName(equipment.getNativeEMSName());
+        cEquipment.setNativeEMSName(equipment.getInstalledEquipmentObjectType());
         String additionalInfo = equipment.getAdditionalInfo();
         if (additionalInfo.length() > 1500)
             cEquipment.setAdditionalInfo("");
