@@ -6,6 +6,7 @@ import com.alcatelsbell.cdcp.server.adapters.*;
 import com.alcatelsbell.cdcp.server.adapters.huaweiu2000.U2000MigratorUtil;
 import com.alcatelsbell.cdcp.util.*;
 import com.alcatelsbell.nms.common.SysUtil;
+import com.alcatelsbell.nms.cronjob.Detect;
 import com.alcatelsbell.nms.db.components.client.JpaClient;
 import com.alcatelsbell.nms.db.components.service.DBUtil;
 import com.alcatelsbell.nms.db.components.service.JPASupport;
@@ -13,6 +14,8 @@ import com.alcatelsbell.nms.db.components.service.JPASupportSpringImpl;
 import com.alcatelsbell.nms.db.components.service.JPAUtil;
 import com.alcatelsbell.nms.util.log.LogUtil;
 import com.alcatelsbell.nms.valueobject.BObject;
+
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.asb.mule.probe.framework.entity.*;
 import org.asb.mule.probe.framework.service.Constant;
@@ -550,6 +553,8 @@ public class FHOTNM2000OTNMigrator extends AbstractDBFLoader{
         List<CPath_CC> cpathccs = new ArrayList<CPath_CC>();
         List<CPath_Channel> cpathChannels = new ArrayList<CPath_Channel>();
         List<CPath_Section> cPath_sections = new ArrayList<CPath_Section>();
+        List<COMS_CC> cOms_ccs = new ArrayList<COMS_CC>();
+        List<COMS_Section> cOms_sections = new ArrayList<COMS_Section>();
 
         HashMap<String,List<CChannel>> pathSubWaveMap = new HashMap<String, List<CChannel>>();
 
@@ -619,12 +624,13 @@ public class FHOTNM2000OTNMigrator extends AbstractDBFLoader{
                 continue;
             }
 
-
             removeDuplicateRoutes(routes);
             if (routes.size() % 2 != 0) {
                 getLogger().info("OCH route 不是偶数:" + och.getDn() + " size = " + routes.size());
                 continue;
             }
+            
+            List<CSection> omses = new ArrayList<CSection>();
 
             String ochAend = och.getaEnd();
             String ochZend = och.getzEnd();
@@ -661,6 +667,7 @@ public class FHOTNM2000OTNMigrator extends AbstractDBFLoader{
 
                 else if (getCTPType(lastNode).equals("oms") && getCTPType(routea).equals("oms")) {
                     CSection oms = processOMSAndSplitWaves(lastNode,routea);
+                    omses.add(oms);
                     List<CChannel> waves = omsChannelMap.get(oms.getDn());
                     boolean findWave = false;
                     for (CChannel wave : waves) {
@@ -682,12 +689,6 @@ public class FHOTNM2000OTNMigrator extends AbstractDBFLoader{
                     continue;
                 }
 
-
-
-
-
-
-
             }
 
             LinkInfo ochSection = findOCHSection(lastNode, ochAend, sections);
@@ -698,7 +699,74 @@ public class FHOTNM2000OTNMigrator extends AbstractDBFLoader{
                 getLogger().error("最后一段路由无法找到");
             }
 
+            // 处理OMS_CC/OMS_SECTION
+            try {
+            	if (Detect.notEmpty(omses)) {
+                	Iterator<R_TrafficTrunk_CC_Section> iterator2 = routes.iterator();
+                    while (iterator2.hasNext()) {
+                    	R_TrafficTrunk_CC_Section route = iterator2.next();
+                        String routea = route.getaEnd();
+                        String routez = route.getzEnd();
+                        
+                        for (CSection oms : omses) {
+                        	if (getCTPType(routea).equals("oms")) {
+    							if (StringUtils.contains(routea, oms.getAendTp()) || StringUtils.contains(routea, oms.getZendTp())) {
+    								COMS_CC coms_cc = new COMS_CC();
+    								coms_cc.setDn(SysUtil.nextDN());
+    								coms_cc.setOmsdn(oms.getDn());
+    								coms_cc.setCcdn(route.getCcOrSectionDn());
+    								coms_cc.setEmsName(emsdn);
+    								cOms_ccs.add(coms_cc);
 
+    								List<CSection> csections = ptpSectionMap.get(routez);
+    								if (Detect.notEmpty(csections)) {
+    									for (CSection csection : csections) {
+    										COMS_Section coms_section = new COMS_Section();
+    	    								coms_section.setDn(SysUtil.nextDN());
+    	    								coms_section.setOmsdn(oms.getDn());
+    	    								coms_section.setSectiondn(csection.getDn());
+    	    								coms_section.setEmsName(emsdn);
+    	    								cOms_sections.add(coms_section);
+    									}
+    								} else {
+    									getLogger().error("cc没有关联ots：" + route.getCcOrSectionDn());
+    								}
+    							}
+                            } else if (getCTPType(routez).equals("oms")) {
+                            	if (StringUtils.contains(routez, oms.getAendTp()) || StringUtils.contains(routez, oms.getZendTp())) {
+    								COMS_CC coms_cc = new COMS_CC();
+    								coms_cc.setDn(SysUtil.nextDN());
+    								coms_cc.setOmsdn(oms.getDn());
+    								coms_cc.setCcdn(route.getCcOrSectionDn());
+    								coms_cc.setEmsName(emsdn);
+    								cOms_ccs.add(coms_cc);
+
+    								List<CSection> csections = ptpSectionMap.get(routea);
+    								if (Detect.notEmpty(csections)) {
+    									for (CSection csection : csections) {
+    										COMS_Section coms_section = new COMS_Section();
+    	    								coms_section.setDn(SysUtil.nextDN());
+    	    								coms_section.setOmsdn(oms.getDn());
+    	    								coms_section.setSectiondn(csection.getDn());
+    	    								coms_section.setEmsName(emsdn);
+    	    								cOms_sections.add(coms_section);
+    									}
+    								} else {
+    									getLogger().error("cc没有关联ots：" + route.getCcOrSectionDn());
+    								}
+    							}
+                        	} else {
+                        		getLogger().error("cc没有关联oms：" + route.getCcOrSectionDn());
+                        	}
+                        }
+                    }
+            	} else {
+            		getLogger().error("och没有关联oms：" + och.getDn());
+            	}
+            } catch (Exception e) {
+                getLogger().error(e, e);
+            }
+            
         }
 
         List<CRoute_CC> route_ccs = new ArrayList<CRoute_CC>();
@@ -882,6 +950,9 @@ public class FHOTNM2000OTNMigrator extends AbstractDBFLoader{
             di.insertWithDupCheck(route_ccs);
             di.insertWithDupCheck(route_channels);
             di.insertWithDupCheck(route_sections);
+            
+            di.insertWithDupCheck(cOms_ccs);
+            di.insertWithDupCheck(cOms_sections);
         } catch (Exception e) {
             getLogger().error(e, e);
         }
