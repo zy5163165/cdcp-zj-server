@@ -1187,8 +1187,11 @@ public class HWU2000DWDMMigrator extends AbstractDBFLoader{
                 List<CCTP> c = findAllChildCTPS(cctp.getDn());
                 if (c != null && c.size() > 0) {
                     all.addAll(c);
+                    if (!all.contains(cctp))
+                    	all.add(cctp);
                 } else {
-                    all.add(cctp);
+                	if (!all.contains(cctp))
+                    	all.add(cctp);
                 }
             }
         }
