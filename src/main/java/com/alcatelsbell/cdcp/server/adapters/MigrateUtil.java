@@ -271,7 +271,8 @@ public class MigrateUtil {
 		for (R_TrafficTrunk_CC_Section route : routes) {
 			if (route.getDn().equals("d526876e-8b38-4ddc-964e-b27b07224044"))
 				System.out.println();
-			if (route.getType().equals("CC") && (route.getaEnd().equals(ctp) || route.getzEnd().equals(ctp)))
+//			if (route.getType().equals("CC") && (route.getaEnd().equals(ctp) || route.getzEnd().equals(ctp)))
+			if (route.getType().equals("CC") && (route.getaEnd().contains("/och=") || route.getzEnd().contains("/och=")))
 				return new LinkInfo(route.getCcOrSectionDn(),"CC",route,route.getaEnd().equals(ctp) ? route.getzEnd() :route.getaEnd(),ctp);
 
 		}
