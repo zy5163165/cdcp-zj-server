@@ -95,7 +95,7 @@ public class ZTE_PTN_U31_Migrator extends AbstractDBFLoader {
         migrateCC();
 
     //    makeupCTP_CC_SECTION();
-
+        migrateFTPPTP();
 
         logAction("migrateFlowDomainFragment", "同步业务", 25);
         migrateFlowDomainFragment();
@@ -177,8 +177,10 @@ public class ZTE_PTN_U31_Migrator extends AbstractDBFLoader {
             String additionalInfo = snc.getAdditionalInfo();
             HashMap<String, String> map = MigrateUtil.transMapValue(additionalInfo);
             String belongSNC = map.get("BelongSNC");
+            String rate = snc.getRate();
 
-            if (belongSNC == null) {
+            if ("1556".equals(rate) || "1557".equals(rate)) {
+            	getLogger().info("tunnel rate = " + rate);
                 tunnelmap.put(snc.getDn(),snc);
             } else {
                 String parentdn = transSncDn(belongSNC);
