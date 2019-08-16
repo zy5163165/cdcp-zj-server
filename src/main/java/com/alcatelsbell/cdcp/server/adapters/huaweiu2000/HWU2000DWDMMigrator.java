@@ -61,6 +61,14 @@ public class HWU2000DWDMMigrator extends AbstractDBFLoader{
     @Override
     public void doExecute() throws Exception {
         checkEMS(emsdn, "华为");
+        
+        migrateLogical = getAttribute("logical") == null ? true : "true".equalsIgnoreCase(getAttribute("logical").toString()) ;
+
+        if (migrateLogical && !isTableHasData(CTP.class)) {
+                    migrateLogical = false;
+                    getLogger().info("CTP IS EMPTY ,LOGCAL = FALSE");
+        }
+        getLogger().info("logical = "+migrateLogical);
 
         logAction(emsdn + " migrateManagedElement", "同步网元", 1);
         migrateManagedElement();
@@ -77,16 +85,23 @@ public class HWU2000DWDMMigrator extends AbstractDBFLoader{
         logAction("migratePTP", "同步端口", 20);
         migratePTP();
 
-        migrateSection();
+        if (migrateLogical) {
+        	migrateSection();
+        } else {
+        	migrateSectionForPhysicalOnly();
+        }
 
         logAction("migrateCTP", "同步CTP", 25);
         migrateCTP();
 
-        logAction("migrateCC", "同步CC", 40);
-        migrateCC();
+        if (migrateLogical) {
+        	logAction("migrateCC", "同步CC", 40);
+            migrateCC();
 
-        logAction("migrateOMS", "同步逻辑资源", 60);
-        migrateOMS();
+            logAction("migrateOMS", "同步逻辑资源", 60);
+            migrateOMS();
+        }
+        
         sd.release();
 //        logAction("migrateSection", "同步段", 25);
 //        migrateSection();
@@ -1335,6 +1350,34 @@ public class HWU2000DWDMMigrator extends AbstractDBFLoader{
 
     }
 
+    /**
+     * 物理采集，只删除ots，不删除oms
+     * @throws Exception
+     */
+    protected void migrateSectionForPhysicalOnly() throws Exception {
+		if (!isTableHasData(Section.class))
+			return;
+		executeDelete("delete  from CSection c where c.emsName = '" + emsdn + "' and c.type = 'OTS' ", CSection.class);
+		DataInserter di = new DataInserter(emsid);
+		List<Section> sections = sd.queryAll(Section.class);
+		if (sections != null && sections.size() > 0) {
+			for (Section section : sections) {
+				CSection csection = transSection(section);
+				csection.setSid(DatabaseUtil.nextSID(csection));
+				// csection.setSid(toSid(Long.parseLong(section.getDn().substring(section.getDn().lastIndexOf(" - ") + 3))));
+				String aendtp = csection.getAendTp();
+				String zendtp = csection.getZendTp();
+				if (aendtp.contains("CTP") || zendtp.contains("CTP")) {
+					continue;
+				}
+				csection.setAptpId(DatabaseUtil.getSID(CPTP.class, aendtp));
+				csection.setZptpId(DatabaseUtil.getSID(CPTP.class, zendtp));
+				di.insert(csection);
+			}
+		}
+		di.end();
+	}
+    
 
     @Override
     public CSection transSection(Section section) {
