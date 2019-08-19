@@ -2309,10 +2309,10 @@ public abstract class AbstractDBFLoader {
 		cEquipment.setInstalledSerialNumber(equipment.getSerialNumber());
 		cEquipment.setInstalledVersion(null);
 		
-		cEquipment.setNativeEMSName(equipment.getNativeName());
+		cEquipment.setNativeEMSName(equipment.getCardType());
 		cEquipment.setOwner(null);
 		cEquipment.setServiceState(equipment.getServiceState());
-		cEquipment.setUserLabel(equipment.getCardType());
+		cEquipment.setUserLabel(equipment.getNativeName());
 
 		return cEquipment; // To change body of created methods use File | Settings | File Templates.
 	}
