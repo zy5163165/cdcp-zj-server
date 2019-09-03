@@ -7,6 +7,8 @@ import java.util.*;
 
 import com.alcatelsbell.cdcp.util.*;
 import com.alcatelsbell.nms.valueobject.BObject;
+
+import org.apache.commons.lang.StringUtils;
 import org.asb.mule.probe.framework.entity.CrossConnect;
 import org.asb.mule.probe.framework.entity.Equipment;
 import org.asb.mule.probe.framework.entity.FlowDomainFragment;
@@ -1172,6 +1174,12 @@ public class HWU2000DBFMigrator extends AbstractDBFLoader {
 			nativeEMSName = equipment.getNativeEMSName();
 		}
 		cequipment.setNativeEMSName(nativeEMSName);
+//		getLogger().info("入库板卡... " + emsdn);
+		if ("ZJ-NCE-1-PTN".equalsIgnoreCase(emsdn)) {
+//			getLogger().info("入库板卡--" + emsdn);
+			cequipment.setAdditionalInfo(StringUtils.substring(cequipment.getAdditionalInfo(), 0, 1200));
+		}
+		
 		return cequipment;
 	}
 
