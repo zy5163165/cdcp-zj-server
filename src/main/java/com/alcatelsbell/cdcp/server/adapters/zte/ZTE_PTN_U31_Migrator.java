@@ -179,7 +179,7 @@ public class ZTE_PTN_U31_Migrator extends AbstractDBFLoader {
             String belongSNC = map.get("BelongSNC");
             String rate = snc.getRate();
 
-            if ("1556".equals(rate) || "1557".equals(rate)) {
+            if ("1557".equals(rate)) {
             	getLogger().info("tunnel rate = " + rate);
                 tunnelmap.put(snc.getDn(),snc);
             } else {
@@ -285,7 +285,7 @@ public class ZTE_PTN_U31_Migrator extends AbstractDBFLoader {
 					int from = 0;
 					int limit = 10000;
 					if (fdf.getaPtp().contains("slot=255")) {
-						List<R_FTP_PTP> ftpPtps = sd.query("select c from R_FTP_PTP c where c.ftpDn like '" + fdf.getaPtp() + "%'", from, limit);
+						List<R_FTP_PTP> ftpPtps = sd.query("select c from R_FTP_PTP c where c.tag1 = 'ForPw' and c.ftpDn like '" + fdf.getaPtp() + "%'", from, limit);
 						getLogger().info("TransPwe3Aend : " + fdf.getaPtp() + "---querySize=" + ftpPtps.size());
 						if (Detect.notEmpty(ftpPtps)) {
 							cpwe3.setAptp(ftpPtps.get(0).getPtpDn());
@@ -298,7 +298,7 @@ public class ZTE_PTN_U31_Migrator extends AbstractDBFLoader {
 
 					}
 					if (fdf.getzPtp().contains("slot=255")) {
-						List<R_FTP_PTP> ftpPtps = sd.query("select c from R_FTP_PTP c where c.ftpDn like '" + fdf.getzPtp() + "%'", from, limit);
+						List<R_FTP_PTP> ftpPtps = sd.query("select c from R_FTP_PTP c where c.tag1 = 'ForPw' and c where c.ftpDn like '" + fdf.getzPtp() + "%'", from, limit);
 						getLogger().info("TransPwe3Zend : " + fdf.getzPtp() + "---querySize=" + ftpPtps.size());
 						if (Detect.notEmpty(ftpPtps)) {
 							cpwe3.setZptp(ftpPtps.get(0).getPtpDn());
@@ -1442,12 +1442,15 @@ public class ZTE_PTN_U31_Migrator extends AbstractDBFLoader {
 		if (isTableHasData(CFTP_PTP.class))
 			executeDelete("delete from CFTP_PTP c where c.emsName = '" + emsdn + "'", CFTP_PTP.class);
 		
-		List<R_FTP_PTP> list = sd.queryAll(R_FTP_PTP.class);
+//		List<R_FTP_PTP> list = sd.queryAll(R_FTP_PTP.class);
+		List<R_FTP_PTP> list = sd.query("select c from R_FTP_PTP c where c.tag1 = 'ForPtp' ");
 		DataInserter di = new DataInserter(emsid);
 		String[] ftps = new String[]{};
 		String[] ptps = new String[]{};
+		String[] dns = new String[]{};
 		for (int i = 0; i < list.size(); i++) {
 			R_FTP_PTP r_ftp_ptp = list.get(i);
+			String dn = r_ftp_ptp.getDn();
 			String ftp = r_ftp_ptp.getFtpDn();
 			String ptp = r_ftp_ptp.getPtpDn();
 			if (ArrayUtils.contains(ftps, ftp)) {
@@ -1456,6 +1459,11 @@ public class ZTE_PTN_U31_Migrator extends AbstractDBFLoader {
 			if (ArrayUtils.contains(ptps, ptp)) {
 				continue;
 			}
+			if (ArrayUtils.contains(dns, dn)) {
+				getLogger().info("重复的rftpptpDn" + dn);
+				continue;
+			}
+			ArrayUtils.add(dns, dn);
 			ArrayUtils.add(ftps, ftp);
 			ArrayUtils.add(ptps, ptp);			
 			CFTP_PTP cftp_ptp = transFTP_PTP(emsdn, r_ftp_ptp);
