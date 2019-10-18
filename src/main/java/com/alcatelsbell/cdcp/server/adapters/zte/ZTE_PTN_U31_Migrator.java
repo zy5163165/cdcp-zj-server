@@ -299,7 +299,7 @@ public class ZTE_PTN_U31_Migrator extends AbstractDBFLoader {
 							getLogger().info("TransPwe3Zend : " + fdf.getzPtp() + "---querySize=" + ftpPtps.size());
 							cpwe3.setZptp(ftpPtps.get(0).getPtpDn());
 						} else {
-							getLogger().info("TransPwe3Aend : " + fdf.getzPtp() + "---querySize=0");
+							getLogger().info("TransPwe3Zend : " + fdf.getzPtp() + "---querySize=0");
 						}
 					}
 
