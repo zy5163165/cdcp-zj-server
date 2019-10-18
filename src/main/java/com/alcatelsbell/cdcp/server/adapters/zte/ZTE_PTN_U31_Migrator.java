@@ -286,24 +286,21 @@ public class ZTE_PTN_U31_Migrator extends AbstractDBFLoader {
 					int limit = 10000;
 					if (fdf.getaPtp().contains("slot=255")) {
 						List<R_FTP_PTP> ftpPtps = sd.query("select c from R_FTP_PTP c where c.tag1 = 'ForPw' and c.ftpDn like '" + fdf.getaPtp() + "%'", from, limit);
-						getLogger().info("TransPwe3Aend : " + fdf.getaPtp() + "---querySize=" + ftpPtps.size());
 						if (Detect.notEmpty(ftpPtps)) {
+							getLogger().info("TransPwe3Aend : " + fdf.getaPtp() + "---querySize=" + ftpPtps.size());
 							cpwe3.setAptp(ftpPtps.get(0).getPtpDn());
+						} else {
+							getLogger().info("TransPwe3Aend : " + fdf.getaPtp() + "---querySize=0");
 						}
-
-						// List<CFTP_PTP> cpgts = null;
-						// cpgts = JPAUtil.getInstance().findObjects(jpaSupport,
-						// "select c from CProtectionGroupTunnel c where
-						// c.emsName = '" + emsdn + "'");
-
 					}
 					if (fdf.getzPtp().contains("slot=255")) {
-						List<R_FTP_PTP> ftpPtps = sd.query("select c from R_FTP_PTP c where c.tag1 = 'ForPw' and c where c.ftpDn like '" + fdf.getzPtp() + "%'", from, limit);
-						getLogger().info("TransPwe3Zend : " + fdf.getzPtp() + "---querySize=" + ftpPtps.size());
+						List<R_FTP_PTP> ftpPtps = sd.query("select c from R_FTP_PTP c where c.tag1 = 'ForPw' and c.ftpDn like '" + fdf.getzPtp() + "%'", from, limit);
 						if (Detect.notEmpty(ftpPtps)) {
+							getLogger().info("TransPwe3Zend : " + fdf.getzPtp() + "---querySize=" + ftpPtps.size());
 							cpwe3.setZptp(ftpPtps.get(0).getPtpDn());
+						} else {
+							getLogger().info("TransPwe3Aend : " + fdf.getzPtp() + "---querySize=0");
 						}
-
 					}
 
                     if (true) {
