@@ -24,6 +24,10 @@ public class CEquipment extends CdcpObject
     private String installedPartNumber = "";
     private String installedVersion = "";
     private String installedSerialNumber = "";
+    
+    private String installedSerialNumber2 = "";
+    private String installedPartNumber2 = "";
+    
     private Long slotId;
     @Temporal(TemporalType.TIMESTAMP)
     private Date collectTimepoint;
@@ -213,7 +217,25 @@ public class CEquipment extends CdcpObject
     public void setOwner(String owner) {
         this.owner = owner;
     }
-    /* (non-Javadoc)
+    
+    
+    public String getInstalledSerialNumber2() {
+		return installedSerialNumber2;
+	}
+
+	public void setInstalledSerialNumber2(String installedSerialNumber2) {
+		this.installedSerialNumber2 = installedSerialNumber2;
+	}
+
+	public String getInstalledPartNumber2() {
+		return installedPartNumber2;
+	}
+
+	public void setInstalledPartNumber2(String installedPartNumber2) {
+		this.installedPartNumber2 = installedPartNumber2;
+	}
+
+	/* (non-Javadoc)
      * @see java.lang.Object#toString()
      */
     @Override

@@ -1425,6 +1425,19 @@ public abstract class AbstractDBFLoader {
 		// cEquipment.setParentDn(equipment.getParentDn());
 		cEquipment.setServiceState(equipment.getServiceState());
 		cEquipment.setUserLabel(equipment.getUserLabel());
+		
+		HashMap<String, String> additionalInfoMap = MigrateUtil.transMapValue(equipment.getAdditionalInfo());
+		if (additionalInfoMap != null) {
+			if (Detect.notEmpty(additionalInfoMap.get("installedSerialNumber"))) {
+				cEquipment.setInstalledSerialNumber2(additionalInfoMap.get("installedSerialNumber"));
+			}
+			if (Detect.notEmpty(additionalInfoMap.get("installedPartNumber"))) {
+				cEquipment.setInstalledPartNumber2(additionalInfoMap.get("installedPartNumber"));
+			}
+		}
+		if (!Detect.notEmpty(cEquipment.getInstalledSerialNumber2())) {
+			cEquipment.setInstalledSerialNumber2(equipment.getInstalledSerialNumber());
+		}
 
 		return cEquipment; // To change body of created methods use File | Settings | File Templates.
 	}
