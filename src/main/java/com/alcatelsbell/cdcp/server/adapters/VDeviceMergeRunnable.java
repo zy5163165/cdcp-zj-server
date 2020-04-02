@@ -1,6 +1,20 @@
 package com.alcatelsbell.cdcp.server.adapters;
 
-import com.alcatelsbell.cdcp.nbi.model.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
+import org.apache.log4j.Logger;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+import com.alcatelsbell.cdcp.nbi.model.CChannel;
+import com.alcatelsbell.cdcp.nbi.model.CDevice;
+import com.alcatelsbell.cdcp.nbi.model.CPTP;
+import com.alcatelsbell.cdcp.nbi.model.CPW;
+import com.alcatelsbell.cdcp.nbi.model.CPWE3;
+import com.alcatelsbell.cdcp.nbi.model.CSection;
+import com.alcatelsbell.cdcp.nbi.model.CTunnel;
 import com.alcatelsbell.cdcp.nbi.model.relationship.RCDeviceVDevice;
 import com.alcatelsbell.cdcp.nbi.model.virtualentity.VDevice;
 import com.alcatelsbell.nms.common.CommonUtil;
@@ -8,15 +22,6 @@ import com.alcatelsbell.nms.db.components.service.JPASupport;
 import com.alcatelsbell.nms.db.components.service.JPASupportSpringImpl;
 import com.alcatelsbell.nms.db.components.service.JPAUtil;
 import com.alcatelsbell.nms.valueobject.BObject;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.log4j.Logger;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 
 /**
  * Author: Ronnie.Chen
@@ -175,7 +180,7 @@ public class VDeviceMergeRunnable {
 	}
 
 	private boolean isU2000EMS(String emsDn) {
-		return emsDn.contains("-U2000-") || emsDn.contains("-T2000-");
+		return emsDn.contains("-U2000-") || emsDn.contains("-T2000-") || emsDn.contains("-NCE-");
 	}
 
 	private boolean isOTNMEMS(String emsDn) {

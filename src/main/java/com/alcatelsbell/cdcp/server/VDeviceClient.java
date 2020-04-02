@@ -1,15 +1,24 @@
 package com.alcatelsbell.cdcp.server;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.poi.hssf.usermodel.HSSFSheet;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.Row;
+
 import com.alcatelsbell.cdcp.nbi.model.CDevice;
 import com.alcatelsbell.cdcp.nbi.model.relationship.RCDeviceVDevice;
 import com.alcatelsbell.cdcp.nbi.model.virtualentity.VDevice;
 import com.alcatelsbell.nms.db.components.client.JpaClient;
-import net.sf.json.JSONObject;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import com.alcatelsbell.nms.util.SysProperty;
 
-import java.util.Date;
-import java.util.List;
+import net.sf.json.JSONObject;
 
 /**
  * Author: Ronnie.Chen
@@ -77,6 +86,8 @@ public class     VDeviceClient {
         }
     }
     public static VDevice createVDevice(String readDn,String realName,String realEms,String virtualDn,String virtualName,String virtualEms) throws Exception {
+    	String date = new SimpleDateFormat("YYYYMMdd").format(System.currentTimeMillis());
+    	
         VDevice vDevice = new VDevice();
         vDevice.setDn(readDn);
         vDevice.setEmsName(realEms);
@@ -85,17 +96,17 @@ public class     VDeviceClient {
         vDevice.setUserLabel(realName);
         vDevice.setCollectTimepoint(new Date());
         vDevice.setUseful("1");
-        vDevice.setTag2("201605");
-        JSONObject json = new JSONObject();
-        json.put("cDeviceEMSName",realEms);
-        json.put("vDeviceEMSName",virtualEms);
-        json.put("cDeviceDn",readDn);
-        json.put("vDeviceDn",virtualDn);
-
-        json.put("cDeviceName",realName);
-        json.put("vDeviceName",virtualName);
-
-        vDevice.setAdditionalInfo(json.toString());
+        vDevice.setTag2(date);
+//        JSONObject json = new JSONObject();
+//        json.put("cDeviceEMSName",realEms);
+//        json.put("vDeviceEMSName",virtualEms);
+//        json.put("cDeviceDn",readDn);
+//        json.put("vDeviceDn",virtualDn);
+//
+//        json.put("cDeviceName",realName);
+//        json.put("vDeviceName",virtualName);
+//
+//        vDevice.setAdditionalInfo(json.toString());
 
 
 
@@ -106,7 +117,7 @@ public class     VDeviceClient {
         rc.setcDeviceNativeEmsName(realName);
         rc.setvDeviceDn(vDevice.getDn());
         rc.setcDevicePrimaryType("2");  //2为真实  //1为虚拟
-        rc.setTag2("201605");
+        rc.setTag2(date);
 
         RCDeviceVDevice rc2 = new RCDeviceVDevice();
         rc2.setDn(virtualDn);
@@ -115,7 +126,7 @@ public class     VDeviceClient {
         rc2.setcDeviceNativeEmsName(virtualName);
         rc2.setvDeviceDn(vDevice.getDn());
         rc2.setcDevicePrimaryType("1");  //2为真实  //1为虚拟
-        rc2.setTag2("201605");
+        rc2.setTag2(date);
 
         JpaClient.getInstance("cdcp.datajpa").executeUpdateSQL("delete from RCDeviceVDevice c where c.vDeviceDn = '"+vDevice.getDn()+"'");
 
@@ -125,8 +136,39 @@ public class     VDeviceClient {
         return vDevice;
 
     }
-
+    
     public static void main(String[] args) throws Exception {
+    	String fileName = SysProperty.getString("cdcp.nbi.createMerge.path", "");
+    	System.out.println(fileName);
+    	File file = new File(fileName);
+    	try {
+    		HSSFWorkbook workbook = new HSSFWorkbook(new FileInputStream(file));
+    		HSSFSheet sheet = workbook.getSheetAt(0);
+    		Row headers = null;
+            for (int rowNum = 0 ;rowNum <= sheet.getLastRowNum();rowNum++) {
+                if (rowNum == 0) {
+                    headers = sheet.getRow(rowNum);
+                } else {
+                    Row dataRow = sheet.getRow(rowNum);
+                    System.out.println(dataRow.getCell(0));
+                    String vDn = dataRow.getCell(0).getStringCellValue();
+                    String vName = dataRow.getCell(1).getStringCellValue();
+                    String vEmsDn = dataRow.getCell(2).getStringCellValue();
+                    String cDn = dataRow.getCell(3).getStringCellValue();
+                    String cName = dataRow.getCell(4).getStringCellValue();
+                    String cEmsDn = dataRow.getCell(5).getStringCellValue();
+                    
+                    createVDevice(cDn,cName,cEmsDn,vDn,vName,vEmsDn);
+                }
+            }
+    		
+    	} catch (Exception e) {
+    		throw new RuntimeException(e);
+    	}
+        
+    }
+
+    public static void main4(String[] args) throws Exception {
         String names =
                 "96-萧山枢纽楼一（第二骨干机房）\n" +
                 "97-萧山枢纽楼二（第一骨干机房）";
