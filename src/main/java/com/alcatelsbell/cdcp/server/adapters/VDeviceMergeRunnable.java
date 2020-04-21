@@ -18,6 +18,7 @@ import com.alcatelsbell.cdcp.nbi.model.CTunnel;
 import com.alcatelsbell.cdcp.nbi.model.relationship.RCDeviceVDevice;
 import com.alcatelsbell.cdcp.nbi.model.virtualentity.VDevice;
 import com.alcatelsbell.nms.common.CommonUtil;
+import com.alcatelsbell.nms.cronjob.Detect;
 import com.alcatelsbell.nms.db.components.service.JPASupport;
 import com.alcatelsbell.nms.db.components.service.JPASupportSpringImpl;
 import com.alcatelsbell.nms.db.components.service.JPAUtil;
@@ -272,7 +273,7 @@ public class VDeviceMergeRunnable {
 
 			String oldATp = (String) CommonUtil.getObjectFieldValue(cls.getDeclaredField(aPortField), line);
 			String oldZTp = (String) CommonUtil.getObjectFieldValue(cls.getDeclaredField(zPortField), line);
-			if (oldATp.startsWith(deviceDn + "@")) {
+			if (Detect.notEmpty(oldATp) && oldATp.startsWith(deviceDn + "@")) {
 				String newAendTP = sameVendor ? convertPtpDnWithSameVendor(oldATp, deviceDn, realDeviceDn) : convertPtpDnWithDiffVendor(emsdn, realEmsDn,
 						oldATp, deviceDn, realDeviceDn);
 				CommonUtil.getInstance().setFiledValue(line, aPortField, newAendTP);
@@ -280,7 +281,7 @@ public class VDeviceMergeRunnable {
 					CommonUtil.getInstance().setFiledValue(line, aPortIdField, DBDataUtil.readSID(CPTP.class, newAendTP));
 			}
 
-			if (oldZTp.startsWith(deviceDn + "@")) {
+			if (Detect.notEmpty(oldZTp) && oldZTp.startsWith(deviceDn + "@")) {
 				String newZendTP = sameVendor ? convertPtpDnWithSameVendor(oldZTp, deviceDn, realDeviceDn) : convertPtpDnWithDiffVendor(emsdn, realEmsDn,
 						oldATp, deviceDn, realDeviceDn);
 				CommonUtil.getInstance().setFiledValue(line, zPortField, newZendTP);
