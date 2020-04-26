@@ -26,9 +26,11 @@ import com.alcatelsbell.cdcp.server.adapters.fenghuootnm2000.FHOTNM2000OTN2Migra
 import com.alcatelsbell.cdcp.server.adapters.fenghuootnm2000.FHOTNM2000OTN3Migrator;
 import com.alcatelsbell.cdcp.server.adapters.fenghuootnm2000.FHOTNM2000OTNMigrator;
 import com.alcatelsbell.cdcp.server.adapters.fenghuootnm2000.FHOTNM2000OTNnewMigrator;
+import com.alcatelsbell.cdcp.server.adapters.fenghuootnm2000.FHOTNM2000SPNMigrator;
 import com.alcatelsbell.cdcp.server.adapters.huaweiu2000.HWU2000DBFMigrator;
 import com.alcatelsbell.cdcp.server.adapters.huaweiu2000.HWU2000DWDMMigrator;
 import com.alcatelsbell.cdcp.server.adapters.huaweiu2000.HWU2000SDHMigrator;
+import com.alcatelsbell.cdcp.server.adapters.huaweiu2000.HWU2000SPNMigrator;
 import com.alcatelsbell.cdcp.server.adapters.zte.ZTE_OTNU31_OTN_Migrator;
 import com.alcatelsbell.cdcp.server.adapters.zte.ZTE_PTN_U31_Migrator;
 import com.alcatelsbell.cdcp.server.adapters.zte.ZTE_SPN_Migrator;
@@ -295,6 +297,9 @@ public class MigrateRunnable implements Runnable {
 					else if (ems.getTag1() != null && (ems.getTag1().equalsIgnoreCase("NewOTN"))) {
 						loader = new FHOTNM2000OTNnewMigrator(file.getAbsolutePath(),emsdn);
 					}
+					else if (ems.getTag1() != null && (ems.getTag1().equalsIgnoreCase("NewSPN"))) {
+						loader = new FHOTNM2000SPNMigrator(file.getAbsolutePath(),emsdn);
+					}
 					else
 						loader = new FHOTNM2000Migrator(file.getAbsolutePath(), emsdn);
 
@@ -305,6 +310,9 @@ public class MigrateRunnable implements Runnable {
 						loader = new HWU2000SDHMigrator(file.getAbsolutePath(),emsdn);
 					else if (ems.getTag1() != null && (ems.getTag1().equals("DWDM") ||ems.getTag1().equals("OTN")  ))
 						loader = new HWU2000DWDMMigrator(file.getAbsolutePath(),emsdn);
+					else if (ems.getTag1() != null && (ems.getTag1().equalsIgnoreCase("NewSPN"))) {
+						loader = new HWU2000SPNMigrator(file.getAbsolutePath(),emsdn);
+					}
 					else
 						loader = new HWU2000DBFMigrator(file.getAbsolutePath(), emsdn);
 				}
@@ -363,7 +371,7 @@ public class MigrateRunnable implements Runnable {
 							|| ems.getTag1().equalsIgnoreCase("DWDM")) ) {
 						loader = new ZTE_OTNU31_OTN_Migrator(serializable,emsdn);
 					}
-					else if (ems.getTag1() != null && (ems.getTag1().equalsIgnoreCase("NewOTN"))) {
+					else if (ems.getTag1() != null && (ems.getTag1().equalsIgnoreCase("NewSPN"))) {
 						loader = new ZTE_SPN_Migrator(serializable,emsdn);
 					}
 
@@ -382,6 +390,9 @@ public class MigrateRunnable implements Runnable {
 					else if (ems.getTag1() != null && (ems.getTag1().equalsIgnoreCase("NewOTN"))) {
 						loader = new FHOTNM2000OTNnewMigrator(serializable,emsdn);
 					}
+					else if (ems.getTag1() != null && (ems.getTag1().equalsIgnoreCase("NewSPN"))) {
+						loader = new FHOTNM2000SPNMigrator(serializable,emsdn);
+					}
 					else
 						loader = new FHOTNM2000Migrator(serializable, emsdn);
 
@@ -392,6 +403,9 @@ public class MigrateRunnable implements Runnable {
 						loader = new HWU2000SDHMigrator(serializable,emsdn);
 					else if (ems.getTag1() != null && (ems.getTag1().equals("DWDM") ||ems.getTag1().equals("OTN")  ))
 						loader = new HWU2000DWDMMigrator(serializable,emsdn);
+					else if (ems.getTag1() != null && (ems.getTag1().equalsIgnoreCase("NewSPN"))) {
+						loader = new HWU2000SPNMigrator(serializable,emsdn);
+					}
 					else
 						loader = new HWU2000DBFMigrator(serializable, emsdn);
 				}

@@ -13,7 +13,7 @@ public class CPWT extends CdcpObject {
 	String tunnelrmUID;
 	String isTunnelGroup;
 	String routingGroup;
-	String number;
+	String numbers;
 	public String getRmUID() {
 		return rmUID;
 	}
@@ -38,11 +38,11 @@ public class CPWT extends CdcpObject {
 	public void setRoutingGroup(String routingGroup) {
 		this.routingGroup = routingGroup;
 	}
-	public String getNumber() {
-		return number;
+	public String getNumbers() {
+		return numbers;
 	}
-	public void setNumber(String number) {
-		this.number = number;
+	public void setNumbers(String numbers) {
+		this.numbers = numbers;
 	}
 
 	

@@ -1,4 +1,4 @@
-package com.alcatelsbell.cdcp.server.adapters.zte;
+package com.alcatelsbell.cdcp.server.adapters.fenghuootnm2000;
 
 import java.io.Serializable;
 import java.lang.reflect.Field;
@@ -139,22 +139,22 @@ import com.alcatelsbell.nms.db.components.service.JPASupportSpringImpl;
 import com.alcatelsbell.nms.valueobject.BObject;
 
 /**
- * 中兴OMC新网管入库(SPN)
+ * 烽火OMC新网管入库(SPN)
  * Author: Zong Yu
  * Date: 2020-04
  * Time: 下午4:43
  */
-public class ZTE_SPN_Migrator extends AbstractDBFLoader{
+public class FHOTNM2000SPNMigrator extends AbstractDBFLoader{
 
-    public ZTE_SPN_Migrator(String fileUrl, String emsdn) {
+    public FHOTNM2000SPNMigrator(String fileUrl, String emsdn) {
         this.fileUrl = fileUrl;
         this.emsdn = emsdn;
         MigrateThread.thread().initLog(emsdn + "." + new SimpleDateFormat("yyyy-MM-dd").format(new Date()) + ".log");
 
     }
 
-    private static FileLogger logger = new FileLogger("ZTE-SPN-Device.log");
-    public ZTE_SPN_Migrator(Serializable object, String emsdn) {
+    private static FileLogger logger = new FileLogger("FH-SPN-Device.log");
+    public FHOTNM2000SPNMigrator(Serializable object, String emsdn) {
         this.emsdn = emsdn;
         this.resultObject = object;
         MigrateThread.thread().initLog(logger);
@@ -193,10 +193,10 @@ public class ZTE_SPN_Migrator extends AbstractDBFLoader{
 
     @Override
     public void doExecute() throws Exception {
-    	checkEMS(emsdn, "中兴");
-    	getLogger().info("中兴SPN入库-ZTE_SPN_Migrator");
+    	checkEMS(emsdn, "烽火");
+    	getLogger().info("烽火SPN入库-FHOTNM2000SPNMigrator");
 //        testTime();
-    	logAction(emsdn + " migrateStart", "同步开始", 0);
+    	logAction(emsdn + " SpnMigrateStart", "SPN同步开始", 0);
         
     	// 不做处理直接入库的对象，都放到BOMap和COMap里
     	HashMap<String,Object> boMap = getBOMap();
@@ -208,7 +208,7 @@ public class ZTE_SPN_Migrator extends AbstractDBFLoader{
     	}
     	i = 0;
     	
-    	logAction(emsdn + " migrateEnd", "同步结束", 100);
+    	logAction(emsdn + " SpnMigrateEnd", "SPN同步结束", 100);
        	System.out.println("11. end");
         
         sd.release();
@@ -640,7 +640,7 @@ public class ZTE_SPN_Migrator extends AbstractDBFLoader{
             context.release();
         }
 
-        ZTE_SPN_Migrator loader = new ZTE_SPN_Migrator (fileName, emsdn){
+        FHOTNM2000SPNMigrator loader = new FHOTNM2000SPNMigrator (fileName, emsdn){
             public void afterExecute() {
                 printTableStat();
             }

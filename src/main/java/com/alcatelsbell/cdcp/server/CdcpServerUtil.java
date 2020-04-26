@@ -34,9 +34,11 @@ import com.alcatelsbell.cdcp.server.adapters.fenghuootnm2000.FHOTNM2000OTN2Migra
 import com.alcatelsbell.cdcp.server.adapters.fenghuootnm2000.FHOTNM2000OTN3Migrator;
 import com.alcatelsbell.cdcp.server.adapters.fenghuootnm2000.FHOTNM2000OTNMigrator;
 import com.alcatelsbell.cdcp.server.adapters.fenghuootnm2000.FHOTNM2000OTNnewMigrator;
+import com.alcatelsbell.cdcp.server.adapters.fenghuootnm2000.FHOTNM2000SPNMigrator;
 import com.alcatelsbell.cdcp.server.adapters.huaweiu2000.HWU2000DBFMigrator;
 import com.alcatelsbell.cdcp.server.adapters.huaweiu2000.HWU2000DWDMMigrator;
 import com.alcatelsbell.cdcp.server.adapters.huaweiu2000.HWU2000SDHMigrator;
+import com.alcatelsbell.cdcp.server.adapters.huaweiu2000.HWU2000SPNMigrator;
 import com.alcatelsbell.cdcp.server.adapters.zte.ZTE_OTNU31_OTN_Migrator;
 import com.alcatelsbell.cdcp.server.adapters.zte.ZTE_SPN_Migrator;
 import com.alcatelsbell.cdcp.server.message.CdcpServerMessage;
@@ -385,6 +387,9 @@ public class CdcpServerUtil {
 				else if (ems.getTag1() != null && (ems.getTag1().equalsIgnoreCase("NewOTN"))) {
 					loader = new FHOTNM2000OTNnewMigrator(neSections,emsdn);
 				}
+				else if (ems.getTag1() != null && (ems.getTag1().equalsIgnoreCase("NewSPN"))) {
+					loader = new FHOTNM2000SPNMigrator(neSections,emsdn);
+				}
 				else
 					loader = new FHOTNM2000Migrator(neSections, emsdn);
 
@@ -395,6 +400,9 @@ public class CdcpServerUtil {
 					loader = new HWU2000SDHMigrator(neSections,emsdn);
 				else if (ems.getTag1() != null && (ems.getTag1().equals("DWDM") ||ems.getTag1().equals("OTN")  ))
 					loader = new HWU2000DWDMMigrator(neSections,emsdn);
+				else if (ems.getTag1() != null && (ems.getTag1().equalsIgnoreCase("NewSPN"))) {
+					loader = new HWU2000SPNMigrator(neSections,emsdn);
+				}
 				else
 					loader = new HWU2000DBFMigrator(neSections, emsdn);
 			}

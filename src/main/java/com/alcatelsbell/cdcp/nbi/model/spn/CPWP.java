@@ -11,7 +11,7 @@ import com.alcatelsbell.cdcp.nbi.model.CdcpObject;
 public class CPWP extends CdcpObject {
 	String rmUID;
 	String carriePwrmUID;
-	String number;
+	String numbers;
 	public String getRmUID() {
 		return rmUID;
 	}
@@ -24,11 +24,11 @@ public class CPWP extends CdcpObject {
 	public void setCarriePwrmUID(String carriePwrmUID) {
 		this.carriePwrmUID = carriePwrmUID;
 	}
-	public String getNumber() {
-		return number;
+	public String getNumbers() {
+		return numbers;
 	}
-	public void setNumber(String number) {
-		this.number = number;
+	public void setNumbers(String numbers) {
+		this.numbers = numbers;
 	}
 
 	
