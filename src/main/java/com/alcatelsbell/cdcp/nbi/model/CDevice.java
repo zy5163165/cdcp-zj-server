@@ -1,12 +1,14 @@
 package com.alcatelsbell.cdcp.nbi.model;
 
-import com.alcatelsbell.nms.common.crud.annotation.BField;
-import com.alcatelsbell.nms.valueobject.BObject;
-import org.hibernate.annotations.Index;
-
-import javax.persistence.*;
-
 import java.util.Date;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+
+import com.alcatelsbell.nms.common.crud.annotation.BField;
 
 /**
  * Author: Ronnie.Chen
@@ -15,7 +17,7 @@ import java.util.Date;
  * rongrong.chen@alcatel-sbell.com.cn
  */
 @Entity
-@Table(name = "C_DEVICE1")
+@Table(name = "C_DEVICE")
 public class CDevice extends CdcpObject {
 	
 	@BField(description = "网元名称",searchType = BField.SearchType.NULLABLE)
