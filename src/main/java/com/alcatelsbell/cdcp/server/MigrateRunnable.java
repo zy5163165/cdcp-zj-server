@@ -1,5 +1,17 @@
 package com.alcatelsbell.cdcp.server;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.log4j.Logger;
+
 import com.alcatelsbell.cdcp.common.Constants;
 import com.alcatelsbell.cdcp.nbi.ws.irmclient.IrmsClientUtil;
 import com.alcatelsbell.cdcp.nodefx.CDCPConstants;
@@ -9,13 +21,17 @@ import com.alcatelsbell.cdcp.nodefx.ObjectInfo;
 import com.alcatelsbell.cdcp.server.adapters.AbstractDBFLoader;
 import com.alcatelsbell.cdcp.server.adapters.alu.ALUDBFMigrator;
 import com.alcatelsbell.cdcp.server.adapters.alu.ALU_OTN_Migrator;
-import com.alcatelsbell.cdcp.server.adapters.fenghuootnm2000.*;
+import com.alcatelsbell.cdcp.server.adapters.fenghuootnm2000.FHOTNM2000Migrator;
+import com.alcatelsbell.cdcp.server.adapters.fenghuootnm2000.FHOTNM2000OTN2Migrator;
+import com.alcatelsbell.cdcp.server.adapters.fenghuootnm2000.FHOTNM2000OTN3Migrator;
+import com.alcatelsbell.cdcp.server.adapters.fenghuootnm2000.FHOTNM2000OTNMigrator;
+import com.alcatelsbell.cdcp.server.adapters.fenghuootnm2000.FHOTNM2000OTNnewMigrator;
 import com.alcatelsbell.cdcp.server.adapters.huaweiu2000.HWU2000DBFMigrator;
 import com.alcatelsbell.cdcp.server.adapters.huaweiu2000.HWU2000DWDMMigrator;
 import com.alcatelsbell.cdcp.server.adapters.huaweiu2000.HWU2000SDHMigrator;
 import com.alcatelsbell.cdcp.server.adapters.zte.ZTE_OTNU31_OTN_Migrator;
 import com.alcatelsbell.cdcp.server.adapters.zte.ZTE_PTN_U31_Migrator;
-import com.alcatelsbell.cdcp.server.v3.FileInfo;
+import com.alcatelsbell.cdcp.server.adapters.zte.ZTE_SPN_Migrator;
 import com.alcatelsbell.cdcp.server.v3.SBIFileLoader;
 import com.alcatelsbell.cdcp.util.DataFileUtil;
 import com.alcatelsbell.cdcp.util.MBeanProxy;
@@ -23,17 +39,6 @@ import com.alcatelsbell.nms.db.components.client.JpaClient;
 import com.alcatelsbell.nms.modules.task.model.Schedule;
 import com.alcatelsbell.nms.modules.task.model.Task;
 import com.alcatelsbell.nms.valueobject.sys.Ems;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.log4j.Logger;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Author: Ronnie.Chen
@@ -263,8 +268,12 @@ public class MigrateRunnable implements Runnable {
 
 				if (type.equals("ZTE")) {
 					if (ems.getTag1() != null && (ems.getTag1().equalsIgnoreCase("OTN")
-							|| ems.getTag1().equalsIgnoreCase("DWDM")) )
+							|| ems.getTag1().equalsIgnoreCase("DWDM")) ) {
 						loader = new ZTE_OTNU31_OTN_Migrator(file.getAbsolutePath(),emsdn);
+					}
+					else if (ems.getTag1() != null && (ems.getTag1().equalsIgnoreCase("NewSPN"))) {
+						loader = new ZTE_SPN_Migrator(file.getAbsolutePath(),emsdn);
+					}
 					else
 						loader = new ZTE_PTN_U31_Migrator(file.getAbsolutePath(),emsdn);
 
@@ -351,9 +360,12 @@ public class MigrateRunnable implements Runnable {
 
 				if (type.equals("ZTE")) {
 					if (ems.getTag1() != null && (ems.getTag1().equalsIgnoreCase("OTN")
-							|| ems.getTag1().equalsIgnoreCase("DWDM")) )
+							|| ems.getTag1().equalsIgnoreCase("DWDM")) ) {
 						loader = new ZTE_OTNU31_OTN_Migrator(serializable,emsdn);
-
+					}
+					else if (ems.getTag1() != null && (ems.getTag1().equalsIgnoreCase("NewOTN"))) {
+						loader = new ZTE_SPN_Migrator(serializable,emsdn);
+					}
 
 				}
 

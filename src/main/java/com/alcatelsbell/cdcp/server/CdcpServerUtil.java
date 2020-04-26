@@ -1,6 +1,31 @@
 package com.alcatelsbell.cdcp.server;
 
-import com.alcatelsbell.cdcp.nodefx.*;
+import java.io.IOException;
+import java.io.Serializable;
+import java.net.URI;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.asb.mule.probe.framework.entity.ManagedElement;
+import org.asb.mule.probe.framework.entity.Section;
+import org.asb.mule.probe.framework.util.FileLogger;
+
+import com.alcatelsbell.cdcp.nodefx.CDCPConstants;
+import com.alcatelsbell.cdcp.nodefx.CorbaEms;
+import com.alcatelsbell.cdcp.nodefx.EmsJob;
+import com.alcatelsbell.cdcp.nodefx.KeepAliveConnectionDynamicMBean;
+import com.alcatelsbell.cdcp.nodefx.NodeAdminMBean;
+import com.alcatelsbell.cdcp.nodefx.NodeException;
 import com.alcatelsbell.cdcp.server.adapters.AbstractDBFLoader;
 import com.alcatelsbell.cdcp.server.adapters.alu.ALUDBFMigrator;
 import com.alcatelsbell.cdcp.server.adapters.alu.ALU_OTN_Migrator;
@@ -13,10 +38,10 @@ import com.alcatelsbell.cdcp.server.adapters.huaweiu2000.HWU2000DBFMigrator;
 import com.alcatelsbell.cdcp.server.adapters.huaweiu2000.HWU2000DWDMMigrator;
 import com.alcatelsbell.cdcp.server.adapters.huaweiu2000.HWU2000SDHMigrator;
 import com.alcatelsbell.cdcp.server.adapters.zte.ZTE_OTNU31_OTN_Migrator;
+import com.alcatelsbell.cdcp.server.adapters.zte.ZTE_SPN_Migrator;
 import com.alcatelsbell.cdcp.server.message.CdcpServerMessage;
 import com.alcatelsbell.cdcp.test.ServerEnv;
 import com.alcatelsbell.cdcp.util.MBeanProxy;
-import com.alcatelsbell.cdcp.util.MigrateThread;
 import com.alcatelsbell.cdcp.util.SqliteDelegation;
 import com.alcatelsbell.nms.common.SpringContext;
 import com.alcatelsbell.nms.common.SysConst;
@@ -24,34 +49,11 @@ import com.alcatelsbell.nms.common.SysUtil;
 import com.alcatelsbell.nms.db.components.client.JpaClient;
 import com.alcatelsbell.nms.db.components.service.JPASupportFactory;
 import com.alcatelsbell.nms.db.components.service.JpaServerUtil;
-import com.alcatelsbell.nms.interfaces.Constants;
 import com.alcatelsbell.nms.modules.task.model.Schedule;
 import com.alcatelsbell.nms.modules.task.model.Task;
 import com.alcatelsbell.nms.util.log.LogUtil;
 import com.alcatelsbell.nms.valueobject.sys.Ems;
 import com.alcatelsbell.nms.valueobject.sys.SysNode;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.asb.mule.probe.framework.entity.ManagedElement;
-import org.asb.mule.probe.framework.entity.Section;
-import org.asb.mule.probe.framework.util.FileLogger;
-
-import javax.management.JMX;
-import javax.management.MBeanServerConnection;
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectName;
-import javax.management.remote.JMXConnector;
-import javax.management.remote.JMXConnectorFactory;
-import javax.management.remote.JMXServiceURL;
-import java.io.IOException;
-import java.io.Serializable;
-import java.net.URI;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Author: Ronnie.Chen
@@ -360,8 +362,12 @@ public class CdcpServerUtil {
 
 			if (type.equals("ZTE")) {
 				if (ems.getTag1() != null && (ems.getTag1().equalsIgnoreCase("OTN")
-						|| ems.getTag1().equalsIgnoreCase("DWDM")) )
+						|| ems.getTag1().equalsIgnoreCase("DWDM")) ) {
 					loader = new ZTE_OTNU31_OTN_Migrator(neSections,emsdn);
+				}
+				else if (ems.getTag1() != null && (ems.getTag1().equalsIgnoreCase("NewSPN"))) {
+					loader = new ZTE_SPN_Migrator(neSections,emsdn);
+				}
 
 
 			}
