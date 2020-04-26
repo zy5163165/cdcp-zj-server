@@ -108,7 +108,50 @@
         <class>com.alcatelsbell.cdcp.nbi.model.COMS_CC</class>
         <class>com.alcatelsbell.cdcp.nbi.model.COMS_Section</class>
 
-
+		<class>com.alcatelsbell.cdcp.nbi.model.spn.CBRD</class>
+		<class>com.alcatelsbell.cdcp.nbi.model.spn.CCRD</class>
+		<class>com.alcatelsbell.cdcp.nbi.model.spn.CEPG</class>
+		<class>com.alcatelsbell.cdcp.nbi.model.spn.CEPU</class>
+		<class>com.alcatelsbell.cdcp.nbi.model.spn.CEQH</class>
+		<class>com.alcatelsbell.cdcp.nbi.model.spn.CESI</class>
+		<class>com.alcatelsbell.cdcp.nbi.model.spn.CESP</class>
+		<class>com.alcatelsbell.cdcp.nbi.model.spn.CETH</class>
+		<class>com.alcatelsbell.cdcp.nbi.model.spn.CETP</class>
+		<class>com.alcatelsbell.cdcp.nbi.model.spn.CIGL</class>
+		<class>com.alcatelsbell.cdcp.nbi.model.spn.CIGT</class>
+		<class>com.alcatelsbell.cdcp.nbi.model.spn.CL3I</class>
+		<class>com.alcatelsbell.cdcp.nbi.model.spn.CL3P</class>
+		<class>com.alcatelsbell.cdcp.nbi.model.spn.CL3T</class>
+		<class>com.alcatelsbell.cdcp.nbi.model.spn.CLBS</class>
+		<class>com.alcatelsbell.cdcp.nbi.model.spn.CMCB</class>
+		<class>com.alcatelsbell.cdcp.nbi.model.spn.CMCL</class>
+		<class>com.alcatelsbell.cdcp.nbi.model.spn.CMCP</class>
+		<class>com.alcatelsbell.cdcp.nbi.model.spn.CMCS</class>
+		<class>com.alcatelsbell.cdcp.nbi.model.spn.CMGB</class>
+		<class>com.alcatelsbell.cdcp.nbi.model.spn.CMGP</class>
+		<class>com.alcatelsbell.cdcp.nbi.model.spn.CMPI</class>
+		<class>com.alcatelsbell.cdcp.nbi.model.spn.CMTL</class>
+		<class>com.alcatelsbell.cdcp.nbi.model.spn.CMTR</class>
+		<class>com.alcatelsbell.cdcp.nbi.model.spn.CNEL</class>
+		<class>com.alcatelsbell.cdcp.nbi.model.spn.CNWS</class>
+		<class>com.alcatelsbell.cdcp.nbi.model.spn.COMC</class>
+		<class>com.alcatelsbell.cdcp.nbi.model.spn.CPGU</class>
+		<class>com.alcatelsbell.cdcp.nbi.model.spn.CPRB</class>
+		<class>com.alcatelsbell.cdcp.nbi.model.spn.CPRT</class>
+		<class>com.alcatelsbell.cdcp.nbi.model.spn.CPSW</class>
+		<class>com.alcatelsbell.cdcp.nbi.model.spn.CPTG</class>
+		<class>com.alcatelsbell.cdcp.nbi.model.spn.CPWP</class>
+		<class>com.alcatelsbell.cdcp.nbi.model.spn.CPWT</class>
+		<class>com.alcatelsbell.cdcp.nbi.model.spn.CSBN</class>
+		<class>com.alcatelsbell.cdcp.nbi.model.spn.CSNN</class>
+		<class>com.alcatelsbell.cdcp.nbi.model.spn.CSRR</class>
+		<class>com.alcatelsbell.cdcp.nbi.model.spn.CSRT</class>
+		<class>com.alcatelsbell.cdcp.nbi.model.spn.CSTT</class>
+		<class>com.alcatelsbell.cdcp.nbi.model.spn.CTDM</class>
+		<class>com.alcatelsbell.cdcp.nbi.model.spn.CTNL</class>
+		<class>com.alcatelsbell.cdcp.nbi.model.spn.CTPB</class>
+		<class>com.alcatelsbell.cdcp.nbi.model.spn.CTPI</class>
+		<class>com.alcatelsbell.cdcp.nbi.model.spn.CTPL</class>
 
 
         <properties>
@@ -159,6 +202,39 @@
         <class>org.asb.mule.probe.framework.entity.SNL</class>
         <class>org.asb.mule.probe.framework.entity.SNT</class>
         <class>org.asb.mule.probe.framework.entity.SNR</class>
+        
+        <class>org.asb.mule.probe.framework.entity.spn.BRD</class>
+		<class>org.asb.mule.probe.framework.entity.spn.ESI</class>
+		<class>org.asb.mule.probe.framework.entity.spn.ESP</class>
+		<class>org.asb.mule.probe.framework.entity.spn.ETH</class>
+		<class>org.asb.mule.probe.framework.entity.spn.ETP</class>
+		<class>org.asb.mule.probe.framework.entity.spn.IGL</class>
+		<class>org.asb.mule.probe.framework.entity.spn.IGT</class>
+		<class>org.asb.mule.probe.framework.entity.spn.L3I</class>
+		<class>org.asb.mule.probe.framework.entity.spn.L3P</class>
+		<class>org.asb.mule.probe.framework.entity.spn.L3T</class>
+		<class>org.asb.mule.probe.framework.entity.spn.LBS</class>
+		<class>org.asb.mule.probe.framework.entity.spn.MCB</class>
+		<class>org.asb.mule.probe.framework.entity.spn.MCL</class>
+		<class>org.asb.mule.probe.framework.entity.spn.MCP</class>
+		<class>org.asb.mule.probe.framework.entity.spn.MCS</class>
+		<class>org.asb.mule.probe.framework.entity.spn.MGB</class>
+		<class>org.asb.mule.probe.framework.entity.spn.MGP</class>
+		<class>org.asb.mule.probe.framework.entity.spn.MPI</class>
+		<class>org.asb.mule.probe.framework.entity.spn.MTL</class>
+		<class>org.asb.mule.probe.framework.entity.spn.MTR</class>
+		<class>org.asb.mule.probe.framework.entity.spn.NWS</class>
+		<class>org.asb.mule.probe.framework.entity.spn.PRB</class>
+		<class>org.asb.mule.probe.framework.entity.spn.PSW</class>
+		<class>org.asb.mule.probe.framework.entity.spn.PWP</class>
+		<class>org.asb.mule.probe.framework.entity.spn.PWT</class>
+		<class>org.asb.mule.probe.framework.entity.spn.SRR</class>
+		<class>org.asb.mule.probe.framework.entity.spn.SRT</class>
+		<class>org.asb.mule.probe.framework.entity.spn.STT</class>
+		<class>org.asb.mule.probe.framework.entity.spn.TDM</class>
+		<class>org.asb.mule.probe.framework.entity.spn.TNL</class>
+		<class>org.asb.mule.probe.framework.entity.spn.TPB</class>
+		<class>org.asb.mule.probe.framework.entity.spn.TPI</class>
         
         <class>org.asb.mule.probe.framework.entity.TopoNode</class>
         <class>org.asb.mule.probe.framework.entity.ProtectionSubnetwork</class>
