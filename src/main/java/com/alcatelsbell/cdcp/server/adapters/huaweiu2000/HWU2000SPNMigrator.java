@@ -60,30 +60,6 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.util.StringUtils;
 
 import com.alcatelsbell.cdcp.common.Constants;
-import com.alcatelsbell.cdcp.nbi.model.CCTP;
-import com.alcatelsbell.cdcp.nbi.model.CChannel;
-import com.alcatelsbell.cdcp.nbi.model.CCrossConnect;
-import com.alcatelsbell.cdcp.nbi.model.CDevice;
-import com.alcatelsbell.cdcp.nbi.model.CEthRoute;
-import com.alcatelsbell.cdcp.nbi.model.CEthRoute_ETHTrunk;
-import com.alcatelsbell.cdcp.nbi.model.CEthRoute_StaticRoute;
-import com.alcatelsbell.cdcp.nbi.model.CEthTrunk;
-import com.alcatelsbell.cdcp.nbi.model.CEthTrunk_SDHRoute;
-import com.alcatelsbell.cdcp.nbi.model.CMP_CTP;
-import com.alcatelsbell.cdcp.nbi.model.CPTP;
-import com.alcatelsbell.cdcp.nbi.model.CPath;
-import com.alcatelsbell.cdcp.nbi.model.CPath_CC;
-import com.alcatelsbell.cdcp.nbi.model.CPath_Channel;
-import com.alcatelsbell.cdcp.nbi.model.CRoute;
-import com.alcatelsbell.cdcp.nbi.model.CRoute_CC;
-import com.alcatelsbell.cdcp.nbi.model.CRoute_Channel;
-import com.alcatelsbell.cdcp.nbi.model.CSection;
-import com.alcatelsbell.cdcp.nbi.model.CStaticRoute;
-import com.alcatelsbell.cdcp.nbi.model.CSubnetwork;
-import com.alcatelsbell.cdcp.nbi.model.CSubnetworkDevice;
-import com.alcatelsbell.cdcp.nbi.model.CTransmissionSystem;
-import com.alcatelsbell.cdcp.nbi.model.CTransmissionSystem_Channel;
-import com.alcatelsbell.cdcp.nbi.model.CVirtualBridge;
 import com.alcatelsbell.cdcp.nbi.model.CdcpObject;
 import com.alcatelsbell.cdcp.nbi.model.spn.CBRD;
 import com.alcatelsbell.cdcp.nbi.model.spn.CCRD;
@@ -215,11 +191,13 @@ public class HWU2000SPNMigrator extends AbstractDBFLoader{
     }
 
     protected Class[] getStatClss() {
-        return new Class[]{CNEL.class, CCrossConnect.class, CChannel.class, CPath.class, CRoute.class, CPath_Channel.class,
-                CPath_CC.class, CRoute_Channel.class,
-                CRoute_CC.class, CSubnetwork.class, CSubnetworkDevice.class, CVirtualBridge.class,
-                CMP_CTP.class, CEthTrunk.class, CStaticRoute.class, CEthRoute.class, CEthTrunk_SDHRoute.class,
-                CEthRoute_StaticRoute.class, CEthRoute_ETHTrunk.class, CSection.class, CCTP.class, CDevice.class, CPTP.class, CTransmissionSystem.class, CTransmissionSystem_Channel.class};
+		return new Class[] { COMC.class, CNEL.class, CEQH.class, CCRD.class, CPRT.class, CPRB.class, CTNL.class,
+				CLBS.class, CTPI.class, CTPB.class, CMPI.class, CMTR.class, CMTL.class, CPSW.class, CPWP.class,
+				CPWT.class, CETH.class, CESP.class, CESI.class, CTDM.class, CETP.class, CBRD.class, CL3I.class,
+				CL3P.class, CL3T.class, CTPL.class, CSBN.class, CSNN.class, CEPG.class, CEPU.class, CPTG.class,
+				CPGU.class, CSTT.class, CSRT.class, CSRR.class, CIGT.class, CIGL.class, CNWS.class, CMGP.class,
+				CMGB.class, CMCL.class, CMCS.class, CMCP.class, CMCB.class
+		};
     }
 
 
@@ -325,7 +303,7 @@ public class HWU2000SPNMigrator extends AbstractDBFLoader{
                 	
                 }
                 co.setEmsName(emsdn);
-                co.setSid(DatabaseUtil.nextSID(co));
+                co.setSid(DatabaseUtil.nextSID(co.getClass()));
                 cdcpList.add(co);
 				
 			} catch (Exception e) {
