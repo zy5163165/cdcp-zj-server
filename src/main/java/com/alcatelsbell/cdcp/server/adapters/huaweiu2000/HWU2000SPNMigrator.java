@@ -60,6 +60,17 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.util.StringUtils;
 
 import com.alcatelsbell.cdcp.common.Constants;
+import com.alcatelsbell.cdcp.nbi.model.CDevice;
+import com.alcatelsbell.cdcp.nbi.model.CEquipment;
+import com.alcatelsbell.cdcp.nbi.model.CFTP_PTP;
+import com.alcatelsbell.cdcp.nbi.model.CPTP;
+import com.alcatelsbell.cdcp.nbi.model.CPW;
+import com.alcatelsbell.cdcp.nbi.model.CPW_Tunnel;
+import com.alcatelsbell.cdcp.nbi.model.CProtectionGroup;
+import com.alcatelsbell.cdcp.nbi.model.CProtectionGroupTunnel;
+import com.alcatelsbell.cdcp.nbi.model.CShelf;
+import com.alcatelsbell.cdcp.nbi.model.CTunnel;
+import com.alcatelsbell.cdcp.nbi.model.CTunnel_Section;
 import com.alcatelsbell.cdcp.nbi.model.CdcpObject;
 import com.alcatelsbell.cdcp.nbi.model.spn.CBRD;
 import com.alcatelsbell.cdcp.nbi.model.spn.CCRD;
@@ -171,6 +182,7 @@ public class HWU2000SPNMigrator extends AbstractDBFLoader{
     public void doExecute() throws Exception {
     	checkEMS(emsdn, "华为");
     	getLogger().info("华为SPN入库-HWU2000SPNMigrator");
+    	System.out.println("华为SPN入库-HWU2000SPNMigrator");
 //        testTime();
     	logAction(emsdn + " SpnMigrateStart", "SPN同步开始", 0);
         
@@ -179,10 +191,54 @@ public class HWU2000SPNMigrator extends AbstractDBFLoader{
     	int i = 1;
     	for (String key : boMap.keySet()) {
     		logAction(emsdn + " migrate" + key, "同步" + key, i);
+    		System.out.println(emsdn + "同步" + key + "-" + i);
     		batchMigrate(key, boMap);
     		i++;
     	}
     	i = 0;
+    	
+    	// 处理需要兼容的对象
+    	logAction(emsdn + " migrateOld", "开始同步兼容对象", 50);
+    	System.out.println(emsdn + "---开始同步兼容对象---");
+    	
+    	logAction(emsdn + " migrateManagedElement", "同步网元", 51);
+    	System.out.println("1.同步网元");
+    	migrateManagedElementForSpn();
+    	
+    	logAction("migrateSubnet", "同步子网", 52);
+        System.out.println("2.同步子网");
+        migrateSubnetworkForSpn();
+        migrateSubnetworkDeviceForSpn();
+
+        logAction("migrateEquipmentHolder", "同步槽道", 53);
+        System.out.println("3.同步槽道");
+        migrateEquipmentHolderForSpn();
+
+        logAction("migrateEquipment", "同步板卡", 54);
+        System.out.println("4.同步板卡");
+        migrateEquipmentForSpn();
+        
+        logAction("migratePtp", "同步端口", 55);
+        System.out.println("5.同步端口");
+        migratePtpForSpn();
+        migrateFtpPtpForSpn();
+        
+        logAction("migrateSection", "同步段", 56);
+        System.out.println("6.同步段");
+        migrateSectionForSpn();
+        
+        logAction("migratePw", "同步伪线", 57);
+        System.out.println("7.同步伪线");
+        migratePwForSpn();
+        
+        logAction("migrateTunnel", "同步隧道", 58);
+        System.out.println("8.同步隧道");
+        migrateTunnelForSpn();
+        migratePwTunnelForSpn(); // 隧道伪线承载关系
+        migrateProtectiongroupForSpn(); // 隧道保护组
+        migrateProtectiongroupTunnelForSpn(); // 隧道保护组关联隧道
+        migrateTunnelSectionForSpn(); // 隧道关联PTN段
+    	
     	
     	logAction(emsdn + " SpnMigrateEnd", "SPN同步结束", 100);
        	System.out.println("11. end");
@@ -191,7 +247,10 @@ public class HWU2000SPNMigrator extends AbstractDBFLoader{
     }
 
     protected Class[] getStatClss() {
-		return new Class[] { COMC.class, CNEL.class, CEQH.class, CCRD.class, CPRT.class, CPRB.class, CTNL.class,
+		return new Class[] {
+				CDevice.class, CShelf.class, CEquipment.class, CPTP.class, CFTP_PTP.class, CPW.class, CPW_Tunnel.class,
+				CTunnel.class, CProtectionGroup.class, CProtectionGroupTunnel.class, CTunnel_Section.class, 
+				COMC.class, CNEL.class, CEQH.class, CCRD.class, CPRT.class, CPRB.class, CTNL.class,
 				CLBS.class, CTPI.class, CTPB.class, CMPI.class, CMTR.class, CMTL.class, CPSW.class, CPWP.class,
 				CPWT.class, CETH.class, CESP.class, CESI.class, CTDM.class, CETP.class, CBRD.class, CL3I.class,
 				CL3P.class, CL3T.class, CTPL.class, CSBN.class, CSNN.class, CEPG.class, CEPU.class, CPTG.class,
@@ -593,8 +652,8 @@ public class HWU2000SPNMigrator extends AbstractDBFLoader{
 //		}
 //		loader1.batchMigrate("");
     	
-        String fileName=  "D:\\123-mt.db";
-        String emsdn = "ZJ-FH-1-OTN";
+        String fileName=  "D:\\ZJ-NCE-1-SPN-mt.db";
+        String emsdn = "ZJ-NCE-1-SPN";
         if (args != null && args.length > 0)
             fileName = args[0];
         if (args != null && args.length > 1)

@@ -4,32 +4,99 @@ import java.io.File;
 import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.ReentrantLock;
 
-import com.alcatelsbell.cdcp.nbi.irm.*;
-import com.alcatelsbell.cdcp.nbi.model.*;
+import javax.persistence.EntityManager;
+
+import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Logger;
+import org.asb.mule.probe.framework.entity.CRD;
+import org.asb.mule.probe.framework.entity.CTP;
+import org.asb.mule.probe.framework.entity.CTP2;
+import org.asb.mule.probe.framework.entity.CrossConnect;
+import org.asb.mule.probe.framework.entity.EDS_PTN;
+import org.asb.mule.probe.framework.entity.EQH;
+import org.asb.mule.probe.framework.entity.Equipment;
+import org.asb.mule.probe.framework.entity.EquipmentHolder;
+import org.asb.mule.probe.framework.entity.FlowDomainFragment;
+import org.asb.mule.probe.framework.entity.HW_MSTPBindingPath;
+import org.asb.mule.probe.framework.entity.ManagedElement;
+import org.asb.mule.probe.framework.entity.NEL;
+import org.asb.mule.probe.framework.entity.PRT;
+import org.asb.mule.probe.framework.entity.PTP;
+import org.asb.mule.probe.framework.entity.R_FTP_PTP;
+import org.asb.mule.probe.framework.entity.R_TrafficTrunk_CC_Section;
+import org.asb.mule.probe.framework.entity.SBN;
+import org.asb.mule.probe.framework.entity.SNN;
+import org.asb.mule.probe.framework.entity.Section;
+import org.asb.mule.probe.framework.entity.SubnetworkConnection;
+import org.asb.mule.probe.framework.entity.TPL;
+import org.asb.mule.probe.framework.entity.TopoNode;
+import org.asb.mule.probe.framework.entity.TrafficTrunk;
+import org.asb.mule.probe.framework.entity.TrailNtwProtection;
+import org.asb.mule.probe.framework.entity.spn.LBS;
+import org.asb.mule.probe.framework.entity.spn.PRB;
+import org.asb.mule.probe.framework.entity.spn.PSW;
+import org.asb.mule.probe.framework.entity.spn.PWT;
+import org.asb.mule.probe.framework.entity.spn.TNL;
+import org.asb.mule.probe.framework.entity.spn.TPB;
+import org.asb.mule.probe.framework.entity.spn.TPI;
+import org.asb.mule.probe.framework.service.Constant;
+import org.hibernate.ejb.HibernateEntityManager;
+import org.hibernate.jdbc.Work;
+
+import com.alcatelsbell.cdcp.common.Constants;
+import com.alcatelsbell.cdcp.nbi.irm.IrmCollectReportUtil;
+import com.alcatelsbell.cdcp.nbi.irm.TJ_Differenceslist;
+import com.alcatelsbell.cdcp.nbi.irm.TJ_INTERFACE_OTN;
+import com.alcatelsbell.cdcp.nbi.irm.TJ_INTERFACE_PTN;
+import com.alcatelsbell.cdcp.nbi.irm.TJ_INTERFACE_SDH;
+import com.alcatelsbell.cdcp.nbi.model.CCTP;
+import com.alcatelsbell.cdcp.nbi.model.CCrossConnect;
+import com.alcatelsbell.cdcp.nbi.model.CDevice;
+import com.alcatelsbell.cdcp.nbi.model.CEMS;
+import com.alcatelsbell.cdcp.nbi.model.CEquipment;
+import com.alcatelsbell.cdcp.nbi.model.CEthRoute;
+import com.alcatelsbell.cdcp.nbi.model.CEthTrunk;
+import com.alcatelsbell.cdcp.nbi.model.CFTP_PTP;
+import com.alcatelsbell.cdcp.nbi.model.CIPAddress;
+import com.alcatelsbell.cdcp.nbi.model.CIPRoute;
+import com.alcatelsbell.cdcp.nbi.model.CMP_CTP;
+import com.alcatelsbell.cdcp.nbi.model.CPTP;
+import com.alcatelsbell.cdcp.nbi.model.CPW;
+import com.alcatelsbell.cdcp.nbi.model.CPWE3;
+import com.alcatelsbell.cdcp.nbi.model.CPWE3_PW;
+import com.alcatelsbell.cdcp.nbi.model.CPW_Tunnel;
+import com.alcatelsbell.cdcp.nbi.model.CPath;
+import com.alcatelsbell.cdcp.nbi.model.CProtectionGroup;
+import com.alcatelsbell.cdcp.nbi.model.CProtectionGroupTunnel;
+import com.alcatelsbell.cdcp.nbi.model.CRack;
+import com.alcatelsbell.cdcp.nbi.model.CRoute;
+import com.alcatelsbell.cdcp.nbi.model.CSection;
+import com.alcatelsbell.cdcp.nbi.model.CShelf;
+import com.alcatelsbell.cdcp.nbi.model.CSlot;
+import com.alcatelsbell.cdcp.nbi.model.CSubnetwork;
+import com.alcatelsbell.cdcp.nbi.model.CSubnetworkDevice;
+import com.alcatelsbell.cdcp.nbi.model.CTunnel;
+import com.alcatelsbell.cdcp.nbi.model.CTunnel_Section;
+import com.alcatelsbell.cdcp.nbi.model.CdcpObject;
+import com.alcatelsbell.cdcp.nodefx.EmsJob;
+import com.alcatelsbell.cdcp.nodefx.NEWrapper;
+import com.alcatelsbell.cdcp.server.CdcpServerUtil;
 import com.alcatelsbell.cdcp.server.MigrateManager;
 import com.alcatelsbell.cdcp.server.MigrateRunnable;
 import com.alcatelsbell.cdcp.server.da.DAEntity;
 import com.alcatelsbell.cdcp.server.da.DAUtil;
-import com.alcatelsbell.nms.db.components.service.*;
-import com.alcatelsbell.nms.util.ObjectUtil;
-import com.alcatelsbell.nms.util.SysProperty;
-import com.alcatelsbell.nms.valueobject.CdcpDictionary;
-import com.alcatelsbell.nms.valueobject.sys.Ems;
-
-import org.apache.commons.lang.StringUtils;
-import org.apache.log4j.Logger;
-import org.asb.mule.probe.framework.entity.*;
-import org.asb.mule.probe.framework.service.Constant;
-
-import com.alcatelsbell.cdcp.common.Constants;
-import com.alcatelsbell.cdcp.nodefx.EmsJob;
-import com.alcatelsbell.cdcp.nodefx.NEWrapper;
-import com.alcatelsbell.cdcp.server.CdcpServerUtil;
+import com.alcatelsbell.cdcp.util.DSUtil;
 import com.alcatelsbell.cdcp.util.DataInserter;
 import com.alcatelsbell.cdcp.util.DatabaseUtil;
 import com.alcatelsbell.cdcp.util.DicConst;
@@ -38,13 +105,17 @@ import com.alcatelsbell.cdcp.util.MigrateThread;
 import com.alcatelsbell.cdcp.util.SqliteDelegation;
 import com.alcatelsbell.nms.common.Detect;
 import com.alcatelsbell.nms.common.SysUtil;
+import com.alcatelsbell.nms.db.components.service.JPASupport;
+import com.alcatelsbell.nms.db.components.service.JPASupportFactory;
+import com.alcatelsbell.nms.db.components.service.JPASupportSpringImpl;
+import com.alcatelsbell.nms.db.components.service.JPAUtil;
+import com.alcatelsbell.nms.db.components.service.JpaServerUtil;
+import com.alcatelsbell.nms.util.ObjectUtil;
+import com.alcatelsbell.nms.util.SysProperty;
 import com.alcatelsbell.nms.util.log.LogUtil;
 import com.alcatelsbell.nms.valueobject.BObject;
-import org.hibernate.HibernateException;
-import org.hibernate.ejb.HibernateEntityManager;
-import org.hibernate.jdbc.Work;
-
-import javax.persistence.EntityManager;
+import com.alcatelsbell.nms.valueobject.CdcpDictionary;
+import com.alcatelsbell.nms.valueobject.sys.Ems;
 
 /**
  * Author: Ronnie.Chen
@@ -2664,7 +2735,808 @@ public abstract class AbstractDBFLoader {
 	}
 	
 	
+	/**
+	 * SPN兼容当前中间表的同步
+	 */
+	/**
+     * 1. 同步网元
+     */
+	// TODO:SPN兼容当前中间表的同步
+    public void migrateManagedElementForSpn() throws Exception {
+		if (!isTableHasData(NEL.class)) {
+			getLogger().info("NEL is empty, return...");
+			return;
+		}
+		List<NEL> meList = sd.queryAll(NEL.class);
+		if (!Detect.notEmpty(meList)) {
+			getLogger().info("NEL is empty, return");
+			return;
+		}
+
+		DataInserter di = new DataInserter(emsid);
+		executeDelete("delete  from CDevice c where c.emsName = '" + emsdn + "'", CDevice.class);
+
+		if (meList != null && meList.size() > 0) {
+			for (NEL me : meList) {
+				CDevice device = transNELForSpn(me);
+				device.setSid(DatabaseUtil.nextSID(device));
+                if(device.getAdditionalInfo().length() > 2000){
+                    device.setAdditionalInfo(null);
+                }
+				di.insert(device);
+			}
+		}
+		di.end();
+	}
+    public CDevice transNELForSpn(NEL me) {
+        
+        CDevice device = new CDevice();
+		device.setEmsName(emsdn);
+		device.setEmsid(emsid);
+		device.setDn(me.getRmUID());//emsdn+"@"+
+		device.setLocation(me.getLocation());
+		device.setNativeEmsName(me.getNativeName());
+		device.setNeVersion(me.getSoftwareVersion());
+		device.setProductName(me.getProductName());
+		device.setSupportedRates(null);
+		device.setUserLabel("managedElement");
+		device.setCollectTimepoint(me.getCreateDate());
+		device.setIpAddress(me.getIPAddress());
+
+		String additionalInfo = assembleAdditionalInfoForSpn(me);
+		device.setAdditionalInfo(additionalInfo);
+		
+        return device;
+    }
+    public String assembleAdditionalInfoForSpn(NEL me) {
+    	String assembleAdditionalInfo = "";
+    	
+    	assembleAdditionalInfo = "xSite:";
+    	assembleAdditionalInfo = assembleAdditionalInfo + "||ySite:";
+    	assembleAdditionalInfo = assembleAdditionalInfo + "||State:" + me.getState();
+    	assembleAdditionalInfo = assembleAdditionalInfo + "||EntityClass:";
+    	assembleAdditionalInfo = assembleAdditionalInfo + "||NeType:";
+    	assembleAdditionalInfo = assembleAdditionalInfo + "||MaxCapacity:";
+    	assembleAdditionalInfo = assembleAdditionalInfo + "||ObjectIP:" + me.getIPAddress();
+    	assembleAdditionalInfo = assembleAdditionalInfo + "||ObjectIPMask:";
+    	assembleAdditionalInfo = assembleAdditionalInfo + "||isGatewayME:";
+    	assembleAdditionalInfo = assembleAdditionalInfo + "||installedSerialNumber:";
+    	assembleAdditionalInfo = assembleAdditionalInfo + "||installedPartNumber:";
+    	assembleAdditionalInfo = assembleAdditionalInfo + "||";
+    	
+    	return assembleAdditionalInfo;
+    }
+    
+    /**
+     * 2. 同步子网、子网网元
+     */
+    public void migrateSubnetworkForSpn() throws Exception {
+		if (!isTableHasData(SBN.class)) {
+			getLogger().info("SBN is empty, return...");
+			return;
+		}
+		List<SBN> subNets = sd.queryAll(SBN.class);
+		if (!Detect.notEmpty(subNets)) {
+			getLogger().info("SBN is empty, return");
+			return;
+		}
+			
+		DataInserter di = new DataInserter(emsid);
+		executeDelete("delete from CSubnetwork c where c.emsName = '" + emsdn + "'", CSubnetwork.class);
+		for (SBN subNet : subNets) {
+			CSubnetwork cSubnetwork = new CSubnetwork();
+			cSubnetwork.setDn(subNet.getRmUID());//emsdn+"@"+
+			cSubnetwork.setName(subNet.getNativeName());
+			cSubnetwork.setNativeemsname(subNet.getNativeName());
+			cSubnetwork.setSid(DatabaseUtil.nextSID(cSubnetwork));
+			cSubnetwork.setEmsName(emsdn);
+			cSubnetwork.setEmsid(emsid);
+			
+			String parent = subNet.getParentSubnetrmUID();
+			if (parent != null && !parent.trim().isEmpty()) {
+				cSubnetwork.setParentSubnetworkDn(parent);
+				cSubnetwork.setParentSubnetworkId(DatabaseUtil.getSID(CSubnetwork.class, parent));
+			}
+
+			di.insert(cSubnetwork);
+		}
+		
+		di.end();
+	}
+    public void migrateSubnetworkDeviceForSpn() throws Exception {
+    	if (!isTableHasData(SNN.class)) {
+			getLogger().info("SNN is empty, return...");
+			return;
+		}
+    	List<SNN> subNetNes = sd.queryAll(SNN.class);
+		if (!Detect.notEmpty(subNetNes)) {
+			getLogger().info("SNN is empty, return");
+			return;
+		}
+    	
+		DataInserter di = new DataInserter(emsid);
+		executeDelete("delete from CSubnetworkDevice c where c.emsName = '" + emsdn + "'", CSubnetworkDevice.class);
+		
+		for (SNN subNetNe : subNetNes) {
+			CSubnetworkDevice csd = new CSubnetworkDevice();
+			csd.setDn(subNetNe.getDn());//emsdn+"@"+
+			csd.setSid(DatabaseUtil.nextSID(csd));
+			String parent = subNetNe.getSubnetrmUID();
+			csd.setSubnetworkDn(parent);
+			if (parent != null)
+				csd.setSubnetworkId(DatabaseUtil.getSID(CSubnetwork.class, parent));
+			csd.setDeviceDn(subNetNe.getRmUID());
+			csd.setEmsName(emsdn);
+			csd.setEmsid(emsid);
+			
+			di.insert(csd);
+		}
+    	
+		di.end();
+    }
+    
+    /**
+     * 3. 同步槽道
+     */
+    public void migrateEquipmentHolderForSpn() throws Exception {
+    	if (!isTableHasData(EQH.class)) {
+			getLogger().info("EQH is empty, return...");
+			return;
+		}
+    	List<EQH> equipmentHolders = sd.queryAll(EQH.class);
+		if (!Detect.notEmpty(equipmentHolders)) {
+			getLogger().info("EQH is empty, return");
+			return;
+		}
+		
+		if (equipmentHolders != null) {
+			executeDelete("delete  from CShelf c where c.emsName = '" + emsdn + "'", CShelf.class);
+			executeDelete("delete  from CRack c where c.emsName = '" + emsdn + "'", CRack.class);
+			executeDelete("delete  from CSlot c where c.emsName = '" + emsdn + "'", CSlot.class);
+
+			insertEQHsForSpn(equipmentHolders);
+		}
+	}
+	public void insertEQHsForSpn(List<EQH> equipmentHolders) throws Exception {
+		if (shelfTypeMap != null) {
+			shelfTypeMap.clear();
+			shelfTypeMap = null;
+		}
+		DataInserter di = new DataInserter(emsid);
+
+		// // ////////////////// 将EQH分类///////////////////
+		List<EQH> racks = new ArrayList<EQH>();
+		List<EQH> shelfs = new ArrayList<EQH>();
+		List<EQH> subshelfs = new ArrayList<EQH>();
+		List<EQH> slots = new ArrayList<EQH>();
+		List<EQH> subslots = new ArrayList<EQH>();
+
+		for (int i = 0; i < equipmentHolders.size(); i++) {
+			EQH equipmentHolder = equipmentHolders.get(i);
+			if (equipmentHolder.getHolderType().equals("rack")) {
+				racks.add(equipmentHolder);
+			} else if (equipmentHolder.getHolderType().equals("shelf")) {
+				shelfs.add(equipmentHolder);
+			}else if (equipmentHolder.getHolderType().equals("sub_shelf")) {
+				subshelfs.add(equipmentHolder);
+			}
+
+			else if (equipmentHolder.getHolderType().equals("slot")) {
+				slots.add(equipmentHolder);
+			} else if (equipmentHolder.getHolderType().equals("sub_slot")) {
+				subslots.add(equipmentHolder);
+			}
+		}
+		
+		// ////////////////// 将EQH分类///////////////////
+		for (EQH equipmentHolder : racks) {
+			CdcpObject cEquipmentHolder = transNewEQHForSpn(equipmentHolder);
+			di.insert(cEquipmentHolder);
+		}
+		for (EQH equipmentHolder : subshelfs) {
+			CdcpObject cEquipmentHolder = transNewEQHForSpn(equipmentHolder);
+			di.insert(cEquipmentHolder);
+		}
+		for (EQH equipmentHolder : shelfs) {
+			CdcpObject cEquipmentHolder = transNewEQHForSpn(equipmentHolder);
+			di.insert(cEquipmentHolder);
+		}
+
+		for (EQH equipmentHolder : slots) {
+			CdcpObject cEquipmentHolder = transNewEQHForSpn(equipmentHolder);
+			di.insert(cEquipmentHolder);
+		}
+		for (EQH equipmentHolder : subslots) {
+			CdcpObject cEquipmentHolder = transNewEQHForSpn(equipmentHolder);
+			di.insert(cEquipmentHolder);
+		}
+		
+		di.end();
+	}
+//    HashMap<String,CRack> rackMap = new HashMap<String, CRack>();
+    public CdcpObject transNewEQHForSpn(EQH equipmentHolder) {
+        CdcpObject cdcpObject = transNewEQH(equipmentHolder);
+        if (cdcpObject instanceof CRack) {
+            String add = ((CRack) cdcpObject).getAdditionalInfo();
+            HashMap<String, String> map = MigrateUtil.transMapValue(add);
+            if (map.get("Sequence") != null)
+                ((CRack) cdcpObject).setNo(map.get("Sequence"));
+
+//            rackMap.put(cdcpObject.getDn(),(CRack)cdcpObject);
+        }
+        if (cdcpObject instanceof CSlot) {
+            String additionalInfo = assembleEQHAdditionalInfo(equipmentHolder);
+            Map<String, String> map = MigrateUtil.transMapValue(additionalInfo);
+            ((CSlot) cdcpObject).setNo(equipmentHolder.getHolderNumber()); // 槽道编号取容器序号
+            if (equipmentHolder.getHolderNumber() == null) {
+            	String nativeEMSName = ((CSlot) cdcpObject).getNativeEMSName();
+                if (nativeEMSName.contains("0X")) {
+                    String no = nativeEMSName.substring(nativeEMSName.lastIndexOf("0X") + 2);
+                    ((CSlot) cdcpObject).setNo(no);
+                } else if (nativeEMSName.contains("SLOT_")){
+                    String no = nativeEMSName.substring(nativeEMSName.lastIndexOf("SLOT_") + 5);
+                    ((CSlot) cdcpObject).setNo(no);
+
+                } else {
+                    ((CSlot) cdcpObject).setNo(nativeEMSName);
+                }
+            }
+        }
+        if (cdcpObject instanceof CShelf) {
+        	CShelf shelf = (CShelf) cdcpObject;
+        	shelf.setShelfType(equipmentHolder.getProductName());
+            if (!Detect.notEmpty(shelf.getShelfType()) || "--".equals(shelf.getShelfType())) {
+            	shelf.setShelfType(getShelfType(shelf.getParentDn())); // 机框型号从设备拷贝
+            }
+        }
+        return cdcpObject;
+    }
+	protected String getShelfType(String neDN) {
+		if (shelfTypeMap == null) {
+			shelfTypeMap = new HashMap<String, String>();
+			getLogger().info("shelfTypeMap: ");
+			List<NEL> nes = sd.queryAll(NEL.class);
+			if (nes != null && nes.size() > 0) {
+				for (NEL ne : nes) {
+					shelfTypeMap.put(ne.getRmUID(), ne.getProductName());
+				}
+			}
+		}
+		return shelfTypeMap.get(neDN);
+	}
+    
+    /**
+	 * 4. 同步板卡
+	 * @throws Exception
+	 */
+	public void migrateEquipmentForSpn() throws Exception {
+		if (!isTableHasData(CRD.class)) {
+			getLogger().info("CRD is empty, return...");
+			return;
+		}
+		executeDelete("delete   from CEquipment c where c.emsName = '" + emsdn + "'", CEquipment.class);
+		List<CRD> equipments = sd.queryAll(CRD.class);
+		insertCRDsForSpn(equipments);
+	}
+	private void insertCRDsForSpn(List<CRD> equipments) throws Exception {
+		DataInserter di = new DataInserter(emsid);
+		if (equipments != null && equipments.size() > 0) {
+			for (CRD equipment : equipments) {
+				CEquipment cEquipment = transNewCRDForSpn(equipment);
+                if (cEquipment != null)
+				    di.insert(cEquipment);
+			}
+		}
+		di.end();
+	}
+	public CEquipment transNewCRDForSpn(CRD equipment) {
+		CEquipment cEquipment = new CEquipment();
+		cEquipment.setCollectTimepoint(equipment.getCreateDate());
+		cEquipment.setDn(equipment.getRmUID());
+		
+		cEquipment.setSlotDn(equipment.getHolderrmUID());
+		cEquipment.setParentDn(equipment.getHolderrmUID());
+		cEquipment.setSlotId(DatabaseUtil.getSID(CSlot.class, equipment.getHolderrmUID()));
+		
+		cEquipment.setAdditionalInfo(null);
+		cEquipment.setEmsName(emsdn);
+		cEquipment.setEmsid(emsid);
+		
+		cEquipment.setExpectedEquipmentObjectType(null);
+		cEquipment.setInstalledEquipmentObjectType(equipment.getCardType());
+		cEquipment.setInstalledPartNumber(null);
+		cEquipment.setInstalledSerialNumber(equipment.getSerialNumber());
+		cEquipment.setInstalledVersion(null);
+		
+		cEquipment.setNativeEMSName(equipment.getCardType());
+		cEquipment.setOwner(null);
+		cEquipment.setServiceState(equipment.getServiceState());
+		cEquipment.setUserLabel(equipment.getNativeName());
+
+		return cEquipment; // To change body of created methods use File | Settings | File Templates.
+	}
 	
+	/**
+	 * 5. 同步端口
+	 * @throws Exception
+	 */
+	public void migratePtpForSpn() throws Exception {
+		if (!isTableHasData(PRT.class)) {
+			getLogger().info("PRT is empty, return...");
+			return;
+		}
+		executeDelete("delete  from CPTP c where c.emsName = '" + emsdn + "'", CPTP.class);
+		executeDelete("delete from CIPAddress c where c.emsName = '" + emsdn + "'", CIPAddress.class);
+		List<PRT> ptps = sd.queryAll(PRT.class);
+		insertPRTsForSpn(ptps);
+	}
+	private void insertPRTsForSpn(List<PRT> ptps) throws Exception {
+		DataInserter di = new DataInserter(emsid);
+		getLogger().info("migratePtp size = " + (ptps == null ? null : ptps.size()));
+		List<CPTP> cptps = new ArrayList<CPTP>();
+		if (ptps != null && ptps.size() > 0) {
+			for (PRT ptp : ptps) {
+				CPTP cptp = transPRTForSpn(ptp);
+				if (cptp != null) {
+					cptps.add(cptp);
+				}
+			}
+		}
+
+		this.removeDuplicateDN(cptps);
+		for (int i = 0; i < cptps.size(); i++) {
+			CPTP cptp = cptps.get(i);
+			di.insert(cptp);
+			if (cptp.getIpAddress() != null && !cptp.getIpAddress().isEmpty()) {
+				CIPAddress ip = new CIPAddress();
+				ip.setDn(SysUtil.nextDN());
+				ip.setSid(DatabaseUtil.nextSID(ip));
+				ip.setEmsName(emsdn);
+				ip.setEmsid(emsid);
+				ip.setIpaddress(cptp.getIpAddress());
+				ip.setPtpId(DatabaseUtil.getSID(CPTP.class, cptp.getDn()));
+				di.insert(ip);
+			}
+		}
+		di.end();
+	}
+	public CPTP transPRTForSpn(PRT ptp) {
+		CPTP cptp = new CPTP();
+		cptp.setDn(ptp.getRmUID());
+		
+		cptp.setCardid(DatabaseUtil.getSID(CEquipment.class, ptp.getCardrmUID()));
+		cptp.setDeviceDn(ptp.getNermUID());
+		cptp.setParentDn(ptp.getCardrmUID());
+		
+		cptp.setSid(DatabaseUtil.nextSID(cptp));
+		cptp.setCollectTimepoint(ptp.getCreateDate());
+		cptp.setEdgePoint(true);//未采集
+		cptp.setConnectionState(null);//未采集
+		cptp.setTpMappingMode(null);//未采集 "D_NA"
+		cptp.setTpProtectionAssociation(null);//未采集 "TPPA_NA"
+		cptp.setDirection(DicUtil.getPtpDirection(ptp.getDirection()));
+		cptp.setRate(ptp.getPortRate());
+//		if (!"NA".equals(ptp.getPortRate())) {
+//			cptp.setSpeed(ptp.getPortRate());
+//		}
+		cptp.setSpeed(DicUtil.getRateWithoutNA(ptp.getPortRate()));
+		cptp.setEmsName(emsdn);
+		cptp.setUserLabel(null);//未采集 "VMU48_OTN_TP"
+		cptp.setNativeEMSName(ptp.getNativeName());
+		cptp.setOwner(null);
+		cptp.setNo(ptp.getPortNo());
+		int eoType = 0;
+		if ("electrical".equalsIgnoreCase(ptp.getSignalType())) {
+			eoType = DicConst.EOTYPE_ELECTRIC;
+			cptp.setEoType(eoType);
+		}
+		if ("optical".equalsIgnoreCase(ptp.getSignalType())) {
+			eoType = DicConst.EOTYPE_OPTIC;
+			cptp.setEoType(eoType);
+		}
+		
+		String ptpType = "";
+		if ("ftp".equalsIgnoreCase(ptp.getPhysicalOrLogical())) {
+			ptpType = "LOGICAL";
+		} else {
+			if ("electrical".equalsIgnoreCase(ptp.getSignalType())) {
+				ptpType = "ELECTRICAL";
+			} else if ("optical".equalsIgnoreCase(ptp.getSignalType())) {
+				ptpType = "OPTICAL";
+			}
+		}
+		cptp.setType(ptpType);// 根据PhysicalOrLogical和SignalType综合计算
+		
+		String additionalInfo = "BandParity:||ProtectionRole:||SupportedPortType:" + ptp.getSignalType() + "||";
+		cptp.setAdditionalInfo(additionalInfo);
+		
+		cptp.setTransmissionParams(null);//未采集
+		cptp.setPortRate(ptp.getPortRate());
+		
+		if (!Detect.notEmpty(cptp.getParentDn()) || "--".equals(cptp.getParentDn())) {
+			cptp.setParentDn(ptp.getNermUID()); // 端口无板卡直接属于设备时，parentdn取设备dn
+		}
+		
+		// 端口的接口改造，新增15个字段的入库
+		cptp.setPhysicalOrLogical(ptp.getPhysicalOrLogical());
+		cptp.setSignalType(ptp.getSignalType());
+		cptp.setPortType(ptp.getPortType());
+		cptp.setPortSubType(ptp.getPortSubType());
+		cptp.setRole(ptp.getRole());
+		cptp.setIsOverlay(ptp.getIsOverlay());
+		cptp.setvNetrmUID(ptp.getvNetrmUID());
+		cptp.setMtnGrouprmUID(ptp.getMtnGrouprmUID());
+		cptp.setInLaserUpthreshold(ptp.getInLaserUpthreshold());
+		cptp.setInLaserDownthreshold(ptp.getInLaserDownthreshold());
+		cptp.setOutLaserUpthreshold(ptp.getOutLaserUpthreshold());
+		cptp.setOutLaserDownthreshold(ptp.getOutLaserDownthreshold());
+		cptp.setIpAddress(ptp.getIPAddress());
+		cptp.setIpMask(ptp.getIPMask());
+		cptp.setIPV6(ptp.getIPV6());
+
+		return cptp;
+	}
+	// c_ftp_ptp端口绑定
+	public void migrateFtpPtpForSpn() throws Exception {
+		if (!isTableHasData(PRB.class)) {
+			getLogger().info("PRB is empty, return...");
+			return;
+		}
+		executeDelete("delete from CFTP_PTP c where c.emsName = '" + emsdn + "'", CFTP_PTP.class);
+		List<PRB> list = sd.queryAll(PRB.class);
+		DataInserter di = new DataInserter(emsid);
+		for (int i = 0; i < list.size(); i++) {
+			PRB prb = list.get(i);
+			CFTP_PTP cftp_ptp = transFtpPtpForSpn(emsdn, prb);
+			di.insert(cftp_ptp);
+		}
+		di.end();
+	}
+	public CFTP_PTP transFtpPtpForSpn(String emsdn, PRB prb) {
+		String ftpDn = prb.getRmUID();
+		String ptpDn = prb.getPhyPortrmUID();
+		CFTP_PTP cftp_ptp = new CFTP_PTP();
+		cftp_ptp.setDn(ftpDn + "<>" + ptpDn);
+		cftp_ptp.setEmsName(emsdn);
+		cftp_ptp.setFtpDn(ftpDn);
+		cftp_ptp.setPtpDn(ptpDn);
+		cftp_ptp.setFtpId(DatabaseUtil.getSID(CPTP.class, ftpDn));
+		cftp_ptp.setPtpId(DatabaseUtil.getSID(CPTP.class, ptpDn));
+//		cftp_ptp.setRate(prb.getRate());
+		return cftp_ptp;
+	}
 	
+	/**
+     * 6. 同步段
+     */
+	HashMap<String, List<TPL>> ptp_sectionMap = new HashMap<String, List<TPL>>();
+    public void migrateSectionForSpn() throws Exception {
+    	if (!isTableHasData(TPL.class)){
+			getLogger().info("TPL is empty, return...");
+			return;
+		}
+        executeDelete("delete  from CSection c where c.emsName = '" + emsdn + "'", CSection.class);
+        DataInserter di = new DataInserter(emsid);
+        List<TPL> sections = sd.queryAll(TPL.class);
+        if (sections != null && sections.size() > 0) {
+            for (TPL section : sections) {
+                CSection csection = transNewSectionForSpn(section);
+//                String azPtp = section.getaEndPortrmUID()+"-"+section.getzEndPortrmUID();
+                DSUtil.putIntoValueList(ptp_sectionMap, section.getaEndPortrmUID(), section);
+                DSUtil.putIntoValueList(ptp_sectionMap, section.getzEndPortrmUID(), section);
+                di.insert(csection);
+            }
+        }
+        di.end();
+    }
+    public CSection transNewSectionForSpn(TPL section) {
+        CSection csection = new CSection();
+        csection.setDn(section.getRmUID());
+        csection.setSid(DatabaseUtil.nextSID(csection));
+        csection.setCollectTimepoint(section.getCreateDate());
+        
+        csection.setDirection(DicUtil.getConnectionDirection(section.getDirection()));
+        csection.setParentDn(null);// 未采集
+        csection.setEmsName(emsdn);
+        csection.setEmsid(emsid);
+        csection.setUserLabel(null);// 未采集
+        csection.setNativeEMSName(section.getNativeName());
+        csection.setOwner(null);// 未采集
+        csection.setAdditionalInfo(null);// 未采集
+
+        csection.setAendTp((section.getaEndPortrmUID()));
+        csection.setZendTp((section.getzEndPortrmUID()));
+        csection.setType("OTS");
+        csection.setSpeed(transCtpType2Tmrate(section.getCtpType()));//getDefaultTmRate(csection.getAendTp())
+        csection.setRate(section.getCtpType());// 根据CtpType转换
+        
+        return csection;
+    }
+    protected String transCtpType2Tmrate(String ctpType) {
+        if ("ODU0".equalsIgnoreCase(ctpType)) {
+        	return "1.25G";
+        }
+        if ("ODU1".equalsIgnoreCase(ctpType)) {
+        	return "2.5G";
+        }
+        if ("ODU2".equalsIgnoreCase(ctpType)) {
+        	return "10G";
+        }
+        if ("ODU2e".equalsIgnoreCase(ctpType)) {
+        	return "10G";
+        }
+        if ("ODU3".equalsIgnoreCase(ctpType)) {
+        	return "40G";
+        }
+        if ("ODU4".equalsIgnoreCase(ctpType)) {
+        	return "100G";
+        }
+
+        return null;
+    }
+    
+    /**
+     * 7. 同步伪线
+     */
+    public void migratePwForSpn() throws Exception {
+    	if (!isTableHasData(PSW.class)){
+			getLogger().info("PSW is empty, return...");
+			return;
+		}
+    	executeDelete("delete from CPW c where c.emsName = '" + emsdn + "'", CPW.class);
+        DataInserter di = new DataInserter(emsid);
+        List<PSW> pws = sd.queryAll(PSW.class);
+        if (pws != null && pws.size() > 0) {
+            for (PSW pw : pws) {
+            	CPW cpw = transPwForSpn(pw);
+                di.insert(cpw);
+            }
+        }
+        di.end();
+    }
+    public CPW transPwForSpn(PSW pw) {
+    	CPW cpw = new CPW();
+    	cpw.setDn(pw.getRmUID());
+    	cpw.setSid(DatabaseUtil.nextSID(cpw));
+    	cpw.setCollectTimepoint(pw.getCreateDate());
+    	cpw.setEmsName(emsdn);
+    	cpw.setEmsid(emsid);
+    	cpw.setNativeEMSName(pw.getNativeName());
+    	
+    	cpw.setDirection(DicUtil.getConnectionDirection(pw.getDirection()));
+    	cpw.setActiveState(pw.getActiveState());
+    	cpw.setAend(pw.getaEndTprmUID());
+    	cpw.setZend(pw.getzEndTprmUID());
+    	cpw.setAptp(pw.getaEndPortrmUID());
+		cpw.setZptp(pw.getzEndPortrmUID());
+        if (cpw.getAptp() != null)
+		    cpw.setAptpId(DatabaseUtil.getSID(CPTP.class, cpw.getAptp()));
+        else {
+            getLogger().error("PW:APTP is null: "+pw.getRmUID());
+        }
+        if (cpw.getZptp() != null)
+		    cpw.setZptpId(DatabaseUtil.getSID(CPTP.class, cpw.getZptp()));
+        else {
+            getLogger().error("PW:ZPTP is null: "+pw.getRmUID());
+        }
+        
+    	String cir = pw.getaEndIngressCIR();
+		if (cir != null && !cir.equals("0"))
+			cpw.setCir(cir + "M");
+		String pir = pw.getaEndIngressPIR();
+		if (pir != null && !pir.equals("10000"))
+			cpw.setPir(pir + "M");
+    	
+    	
+    	return cpw;
+    }
+    
+	
+    /**
+     * 8. 同步隧道
+     */
+    public void migrateTunnelForSpn() throws Exception {
+    	if (!isTableHasData(TNL.class)){
+			getLogger().info("TNL is empty, return...");
+			return;
+		}
+    	executeDelete("delete from CTunnel c where c.emsName = '" + emsdn + "'", CTunnel.class);
+        DataInserter di = new DataInserter(emsid);
+        List<TNL> tunnels = sd.queryAll(TNL.class);
+        if (tunnels != null && tunnels.size() > 0) {
+            for (TNL tunnel : tunnels) {
+            	CTunnel ctunnel = transTunnelForSpn(tunnel);
+                di.insert(ctunnel);
+            }
+        }
+        di.end();
+    }
+    public CTunnel transTunnelForSpn(TNL tunnel) {
+    	CTunnel ctunnel = new CTunnel();
+    	ctunnel.setDn(tunnel.getRmUID());
+    	ctunnel.setSid(DatabaseUtil.nextSID(ctunnel));
+    	ctunnel.setCollectTimepoint(tunnel.getCreateDate());
+    	ctunnel.setEmsName(emsdn);
+    	ctunnel.setEmsid(emsid);
+    	ctunnel.setNativeEMSName(tunnel.getNativeName());
+    	
+    	ctunnel.setDirection(DicUtil.getConnectionDirection(tunnel.getDirection()));
+    	ctunnel.setActiveState(tunnel.getActiveState());
+    	ctunnel.setAend(tunnel.getaEndTprmUID());
+    	ctunnel.setZend(tunnel.getzEndTprmUID());
+    	ctunnel.setAptp(tunnel.getaEndPortrmUID());
+		ctunnel.setZptp(tunnel.getzEndPortrmUID());
+        if (ctunnel.getAptp() != null)
+		    ctunnel.setAptpId(DatabaseUtil.getSID(CPTP.class, ctunnel.getAptp()));
+        else {
+            getLogger().error("PW:APTP is null: "+tunnel.getRmUID());
+        }
+        if (ctunnel.getZptp() != null)
+		    ctunnel.setZptpId(DatabaseUtil.getSID(CPTP.class, ctunnel.getZptp()));
+        else {
+            getLogger().error("PW:ZPTP is null: "+tunnel.getRmUID());
+        }
+        
+        ctunnel.setAingressLabel(tunnel.getaEndRevInLabel());
+        ctunnel.setAegressLabel(tunnel.getaEndOutLabel());
+        ctunnel.setZingressLabel(tunnel.getzEndInLabel());
+        ctunnel.setZegressLabel(tunnel.getzEndRevOutLabel());
+        ctunnel.setCir(tunnel.getCIR());
+        ctunnel.setPir(tunnel.getPIR());
+    	
+    	
+    	return ctunnel;
+    }
+    // c_pw_tunnel
+    public void migratePwTunnelForSpn() throws Exception {
+    	if (!isTableHasData(PWT.class)){
+			getLogger().info("PWT is empty, return...");
+			return;
+		}
+    	executeDelete("delete from CPW_Tunnel c where c.emsName = '" + emsdn + "'", CPW_Tunnel.class);
+        DataInserter di = new DataInserter(emsid);
+        List<PWT> pwts = sd.queryAll(PWT.class);
+        List<CPW_Tunnel> cpw_tunnels = new ArrayList<CPW_Tunnel>();
+        if (pwts != null && pwts.size() > 0) {
+            for (PWT pwt : pwts) {
+            	CPW_Tunnel cpw_tunnel = transCPW_TunnelForSpn(pwt);
+            	cpw_tunnels.add(cpw_tunnel);
+            }
+        }
+        removeDuplicateDN(cpw_tunnels);
+        di.insert(cpw_tunnels);
+        di.end();
+    }
+    protected CPW_Tunnel transCPW_TunnelForSpn(PWT pwt) {
+		CPW_Tunnel cpw_tunnel = new CPW_Tunnel();
+		cpw_tunnel.setDn(pwt.getRmUID() + "<>" + pwt.getTunnelrmUID());
+		cpw_tunnel.setSid(DatabaseUtil.nextSID(cpw_tunnel));
+		cpw_tunnel.setCollectTimepoint(pwt.getCreateDate());
+		cpw_tunnel.setEmsName(emsdn);
+		cpw_tunnel.setEmsid(emsid);
+		
+		cpw_tunnel.setPwDn(pwt.getRmUID());
+		cpw_tunnel.setPwId(DatabaseUtil.getSID(CPW.class, pwt.getRmUID()));
+		cpw_tunnel.setTunnelDn(pwt.getTunnelrmUID());
+		cpw_tunnel.setTunnelId(DatabaseUtil.getSID(CTunnel.class, pwt.getTunnelrmUID()));
+
+		return cpw_tunnel;
+	}
+    // c_protectiongroup
+    public void migrateProtectiongroupForSpn() throws Exception {
+    	if (!isTableHasData(TPI.class)){
+			getLogger().info("TPI is empty, return...");
+			return;
+		}
+    	executeDelete("delete from CProtectionGroup c where c.emsName = '" + emsdn + "'", CProtectionGroup.class);
+        DataInserter di = new DataInserter(emsid);
+        List<TPI> tpis = sd.queryAll(TPI.class);
+        List<CProtectionGroup> cpgs = new ArrayList<CProtectionGroup>();
+        if (tpis != null && tpis.size() > 0) {
+            for (TPI tpi : tpis) {
+            	CProtectionGroup cpg = transProtectionGroupForSpn(tpi);
+            	cpgs.add(cpg);
+            }
+        }
+        removeDuplicateDN(cpgs);
+        di.insert(cpgs);
+        di.end();
+    }
+    private CProtectionGroup transProtectionGroupForSpn(TPI tpi) {
+		CProtectionGroup cpg = new CProtectionGroup();
+		cpg.setDn(tpi.getRmUID());
+		cpg.setSid(DatabaseUtil.nextSID(cpg));
+		cpg.setEmsName(emsdn);
+		
+		cpg.setNativeEMSName(tpi.getNativeName());
+		cpg.setProtectionGroupType(tpi.getType());
+		cpg.setReversionMode(tpi.getReversionMode());
+		return cpg;
+	}
+    // c_protectiongroup_tunnel
+    public void migrateProtectiongroupTunnelForSpn() throws Exception {
+    	if (!isTableHasData(TPB.class)){
+			getLogger().info("TPB is empty, return...");
+			return;
+		}
+		executeDelete("delete from CProtectionGroupTunnel c where c.emsName = '" + emsdn + "'", CProtectionGroupTunnel.class);
+        DataInserter di = new DataInserter(emsid);
+        List<TPB> tpbs = sd.queryAll(TPB.class);
+        if (tpbs != null && tpbs.size() > 0) {
+            for (TPB tpb : tpbs) {
+            	CProtectionGroupTunnel cProtectionGroupTunnel = new CProtectionGroupTunnel();
+				cProtectionGroupTunnel.setDn(tpb.getRmUID() + "<>" + tpb.getTunnelrmUID());
+				// cProtectionGroupTunnel.setSid(DatabaseUtil.nextSID(cProtectionGroupTunnel));
+				cProtectionGroupTunnel.setProtectGroupId(DatabaseUtil.getSID(CProtectionGroup.class, tpb.getRmUID()));
+				cProtectionGroupTunnel.setProtectGroupDn(tpb.getRmUID());
+				cProtectionGroupTunnel.setTunnelDn(tpb.getTunnelrmUID());
+				cProtectionGroupTunnel.setTunnelId(DatabaseUtil.getSID(CTunnel.class, tpb.getTunnelrmUID()));
+				cProtectionGroupTunnel.setEmsName(emsdn);
+				if ("Master".equalsIgnoreCase(tpb.getRole())) {
+					cProtectionGroupTunnel.setStatus("PROTECTED");
+				} else if ("Backup".equalsIgnoreCase(tpb.getRole())) {
+					cProtectionGroupTunnel.setStatus("PROTECTING");
+				} else {
+					cProtectionGroupTunnel.setStatus(tpb.getRole());
+				}
+				
+				// 错误的pg导致DN重复
+				if (!DatabaseUtil.isSIDExisted(CProtectionGroupTunnel.class, cProtectionGroupTunnel.getDn())) {
+					di.insert(cProtectionGroupTunnel);
+				}
+            }
+        }
+        di.end();
+    }
+    // c_tunnel_section
+    public void migrateTunnelSectionForSpn() throws Exception {
+    	if (!isTableHasData(LBS.class)){
+			getLogger().info("LBS is empty, return...");
+			return;
+		}
+    	executeDelete("delete  from CTunnel_Section c where c.emsName = '" + emsdn + "'", CTunnel_Section.class);
+    	DataInserter di = new DataInserter(emsid);
+    	List<LBS> lbss = sd.queryAll(LBS.class);
+        if (lbss != null && lbss.size() > 0) {
+            for (LBS lbs : lbss) {
+            	List<TPL> aendTPL = ptp_sectionMap.get(lbs.getaEndPortrmUID());
+            	List<TPL> zendTPL = ptp_sectionMap.get(lbs.getzEndPortrmUID());
+            	
+            	if (Detect.notEmpty(aendTPL)) {
+            		if (!Detect.onlyOne(aendTPL)) {
+                		getLogger().error("aendTPL.size>1-" + lbs.getaEndPortrmUID());
+                		System.out.println("aendTPL.size>1-" + lbs.getaEndPortrmUID());
+                	}
+            		String sectionDn = aendTPL.get(0).getRmUID();
+            		CTunnel_Section cts = transTunnelSectionForSpn(lbs.getTunnelrmUID(), sectionDn);
+    				if (!DatabaseUtil.isSIDExisted(CTunnel_Section.class, cts.getDn())) // section+tunnel 可能有重复
+    					di.insert(cts);
+            	}
+            	if (Detect.notEmpty(zendTPL)) {
+            		if (!Detect.onlyOne(zendTPL)) {
+                		getLogger().error("zendTPL.size>1-" + lbs.getzEndPortrmUID());
+                		System.out.println("zendTPL.size>1-" + lbs.getzEndPortrmUID());
+                	}
+            		String sectionDn = zendTPL.get(0).getRmUID();
+            		CTunnel_Section cts = transTunnelSectionForSpn(lbs.getTunnelrmUID(), sectionDn);
+    				if (!DatabaseUtil.isSIDExisted(CTunnel_Section.class, cts.getDn())) // section+tunnel 可能有重复
+    					di.insert(cts);
+            	}
+            }
+        }
+        di.end();
+    }
+    private CTunnel_Section transTunnelSectionForSpn(String tunnelDn, String sectionDn) {
+    	CTunnel_Section ts = new CTunnel_Section();
+		ts.setDn(tunnelDn + "<>" + sectionDn);
+		ts.setEmsName(emsdn);
+		ts.setTunnelDn(tunnelDn);
+		ts.setTunnelId(DatabaseUtil.getSID(CTunnel.class, tunnelDn));
+		ts.setSectionDn(sectionDn);
+		ts.setSectionId(DatabaseUtil.getSID(CSection.class, sectionDn));
+		
+		return ts;
+    }
+    
 	
 }

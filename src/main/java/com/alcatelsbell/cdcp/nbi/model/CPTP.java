@@ -1,10 +1,15 @@
 package com.alcatelsbell.cdcp.nbi.model;
 
-import com.alcatelsbell.nms.common.crud.annotation.BField;
-
-import javax.persistence.*;
-
 import java.util.Date;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+import javax.persistence.Transient;
+
+import com.alcatelsbell.nms.common.crud.annotation.BField;
 
 /**
  * Author: Ronnie.Chen
@@ -389,5 +394,128 @@ public class CPTP extends CdcpObject
 	public void setDeviceName(String deviceName) {
 		this.deviceName = deviceName;
 	}
+	
+	String physicalOrLogical;
+	String signalType;
+	String portType;
+	String portSubType;
+	String role;
+	String isOverlay;
+	String vNetrmUID;
+	String MtnGrouprmUID;
+	String inLaserUpthreshold;
+	String inLaserDownthreshold;
+	String outLaserUpthreshold;
+	String outLaserDownthreshold;
+//	String IPAddress;
+//	String IPMask;
+	String IPV6;
+
+	public String getPhysicalOrLogical() {
+		return physicalOrLogical;
+	}
+
+	public void setPhysicalOrLogical(String physicalOrLogical) {
+		this.physicalOrLogical = physicalOrLogical;
+	}
+
+	public String getSignalType() {
+		return signalType;
+	}
+
+	public void setSignalType(String signalType) {
+		this.signalType = signalType;
+	}
+
+	public String getPortType() {
+		return portType;
+	}
+
+	public void setPortType(String portType) {
+		this.portType = portType;
+	}
+
+	public String getPortSubType() {
+		return portSubType;
+	}
+
+	public void setPortSubType(String portSubType) {
+		this.portSubType = portSubType;
+	}
+
+	public String getRole() {
+		return role;
+	}
+
+	public void setRole(String role) {
+		this.role = role;
+	}
+
+	public String getIsOverlay() {
+		return isOverlay;
+	}
+
+	public void setIsOverlay(String isOverlay) {
+		this.isOverlay = isOverlay;
+	}
+
+	public String getvNetrmUID() {
+		return vNetrmUID;
+	}
+
+	public void setvNetrmUID(String vNetrmUID) {
+		this.vNetrmUID = vNetrmUID;
+	}
+
+	public String getMtnGrouprmUID() {
+		return MtnGrouprmUID;
+	}
+
+	public void setMtnGrouprmUID(String mtnGrouprmUID) {
+		MtnGrouprmUID = mtnGrouprmUID;
+	}
+
+	public String getInLaserUpthreshold() {
+		return inLaserUpthreshold;
+	}
+
+	public void setInLaserUpthreshold(String inLaserUpthreshold) {
+		this.inLaserUpthreshold = inLaserUpthreshold;
+	}
+
+	public String getInLaserDownthreshold() {
+		return inLaserDownthreshold;
+	}
+
+	public void setInLaserDownthreshold(String inLaserDownthreshold) {
+		this.inLaserDownthreshold = inLaserDownthreshold;
+	}
+
+	public String getOutLaserUpthreshold() {
+		return outLaserUpthreshold;
+	}
+
+	public void setOutLaserUpthreshold(String outLaserUpthreshold) {
+		this.outLaserUpthreshold = outLaserUpthreshold;
+	}
+
+	public String getOutLaserDownthreshold() {
+		return outLaserDownthreshold;
+	}
+
+	public void setOutLaserDownthreshold(String outLaserDownthreshold) {
+		this.outLaserDownthreshold = outLaserDownthreshold;
+	}
+
+	public String getIPV6() {
+		return IPV6;
+	}
+
+	public void setIPV6(String iPV6) {
+		IPV6 = iPV6;
+	}
+	
+	
+	
 }
 
