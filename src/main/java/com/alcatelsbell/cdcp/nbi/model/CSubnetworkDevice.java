@@ -1,7 +1,5 @@
 package com.alcatelsbell.cdcp.nbi.model;
 
-import com.alcatelsbell.nms.valueobject.BObject;
-
 import javax.persistence.Entity;
 import javax.persistence.Table;
 
@@ -18,6 +16,8 @@ public class CSubnetworkDevice extends CdcpObject {
     private Long deviceId;
     private String subnetworkDn;
     private String deviceDn;
+    private String xPos;
+    private String yPos;
 
     public String getSubnetworkDn() {
         return subnetworkDn;
@@ -50,4 +50,21 @@ public class CSubnetworkDevice extends CdcpObject {
     public void setDeviceId(Long deviceId) {
         this.deviceId = deviceId;
     }
+
+	public String getxPos() {
+		return xPos;
+	}
+
+	public void setxPos(String xPos) {
+		this.xPos = xPos;
+	}
+
+	public String getyPos() {
+		return yPos;
+	}
+
+	public void setyPos(String yPos) {
+		this.yPos = yPos;
+	}
+    
 }

@@ -2504,7 +2504,7 @@ public abstract class AbstractDBFLoader {
 			cequipmentHolder.setAdditionalInfo(assembleEQHAdditionalInfo(equipmentHolder));
 			cequipmentHolder.setShelfType(equipmentHolder.getProductName());
 			return cequipmentHolder;
-		} else if (equipmentHolder.getHolderType().equals("slot")) {
+		} else if (equipmentHolder.getHolderType().equals("slot") || equipmentHolder.getHolderType().equals("sub_slot")) {
 			CSlot cequipmentHolder = new CSlot();
 			cequipmentHolder.setShelfDn(equipmentHolder.getParentHolderrmUID());
 			cequipmentHolder.setShelfId(DatabaseUtil.getSID(CShelf.class, equipmentHolder.getParentHolderrmUID()));
@@ -2517,6 +2517,22 @@ public abstract class AbstractDBFLoader {
 			cequipmentHolder.setHolderType(equipmentHolder.getHolderType());
 			cequipmentHolder.setExpectedOrInstalledEquipment(null);
 			cequipmentHolder.setAcceptableEquipmentTypeList(null);
+			if (equipmentHolder.getHolderType().equals("sub_slot")) {
+				cequipmentHolder.setParentSlotDn(equipmentHolder.getParentHolderrmUID());
+				if (slot_shelfMap != null) {
+					String shelfDn = slot_shelfMap.get(equipmentHolder.getParentHolderrmUID());
+					if (Detect.notEmpty(shelfDn)) {
+						cequipmentHolder.setShelfDn(shelfDn);
+						cequipmentHolder.setShelfId(DatabaseUtil.getSID(CShelf.class, shelfDn));
+					} else {
+						getLogger().error("sub_slot的ParentHolder没有shelf : " + equipmentHolder.getRmUID());
+						System.out.println("sub_slot的ParentHolder没有shelf : " + equipmentHolder.getRmUID());
+					}
+				} else {
+					getLogger().error("slot_shelfMap is null!");
+					System.out.println("slot_shelfMap is null!");
+				}
+			}
 
 			if (cequipmentHolder.getAcceptableEquipmentTypeList() != null && cequipmentHolder.getAcceptableEquipmentTypeList().length() > 1500)
 				cequipmentHolder.setAcceptableEquipmentTypeList("");
@@ -2828,6 +2844,8 @@ public abstract class AbstractDBFLoader {
 			cSubnetwork.setDn(subNet.getRmUID());//emsdn+"@"+
 			cSubnetwork.setName(subNet.getNativeName());
 			cSubnetwork.setNativeemsname(subNet.getNativeName());
+			cSubnetwork.setxPos(subNet.getxPos());
+			cSubnetwork.setyPos(subNet.getyPos());
 			cSubnetwork.setSid(DatabaseUtil.nextSID(cSubnetwork));
 			cSubnetwork.setEmsName(emsdn);
 			cSubnetwork.setEmsid(emsid);
@@ -2866,6 +2884,8 @@ public abstract class AbstractDBFLoader {
 			if (parent != null)
 				csd.setSubnetworkId(DatabaseUtil.getSID(CSubnetwork.class, parent));
 			csd.setDeviceDn(subNetNe.getRmUID());
+			csd.setxPos(subNetNe.getxPos());
+			csd.setyPos(subNetNe.getyPos());
 			csd.setEmsName(emsdn);
 			csd.setEmsid(emsid);
 			
@@ -2897,6 +2917,7 @@ public abstract class AbstractDBFLoader {
 			insertEQHsForSpn(equipmentHolders);
 		}
 	}
+    HashMap<String, String> slot_shelfMap = new HashMap<String, String>();
 	public void insertEQHsForSpn(List<EQH> equipmentHolders) throws Exception {
 		if (shelfTypeMap != null) {
 			shelfTypeMap.clear();
@@ -2920,9 +2941,9 @@ public abstract class AbstractDBFLoader {
 			}else if (equipmentHolder.getHolderType().equals("sub_shelf")) {
 				subshelfs.add(equipmentHolder);
 			}
-
 			else if (equipmentHolder.getHolderType().equals("slot")) {
 				slots.add(equipmentHolder);
+				slot_shelfMap.put(equipmentHolder.getRmUID(), equipmentHolder.getParentHolderrmUID());
 			} else if (equipmentHolder.getHolderType().equals("sub_slot")) {
 				subslots.add(equipmentHolder);
 			}
@@ -2952,6 +2973,10 @@ public abstract class AbstractDBFLoader {
 		}
 		
 		di.end();
+		if (slot_shelfMap != null) {
+			slot_shelfMap.clear();
+			slot_shelfMap = null;
+		}
 	}
 //    HashMap<String,CRack> rackMap = new HashMap<String, CRack>();
     public CdcpObject transNewEQHForSpn(EQH equipmentHolder) {
@@ -3209,7 +3234,7 @@ public abstract class AbstractDBFLoader {
 	/**
      * 6. 同步段
      */
-	HashMap<String, List<TPL>> ptp_sectionMap = new HashMap<String, List<TPL>>();
+	HashMap<String, List<String>> ptp_sectionMap = new HashMap<String, List<String>>();
     public void migrateSectionForSpn() throws Exception {
     	if (!isTableHasData(TPL.class)){
 			getLogger().info("TPL is empty, return...");
@@ -3222,8 +3247,8 @@ public abstract class AbstractDBFLoader {
             for (TPL section : sections) {
                 CSection csection = transNewSectionForSpn(section);
 //                String azPtp = section.getaEndPortrmUID()+"-"+section.getzEndPortrmUID();
-                DSUtil.putIntoValueList(ptp_sectionMap, section.getaEndPortrmUID(), section);
-                DSUtil.putIntoValueList(ptp_sectionMap, section.getzEndPortrmUID(), section);
+                DSUtil.putIntoValueList(ptp_sectionMap, section.getaEndPortrmUID(), section.getRmUID());
+                DSUtil.putIntoValueList(ptp_sectionMap, section.getzEndPortrmUID(), section.getRmUID());
                 di.insert(csection);
             }
         }
@@ -3499,32 +3524,38 @@ public abstract class AbstractDBFLoader {
     	List<LBS> lbss = sd.queryAll(LBS.class);
         if (lbss != null && lbss.size() > 0) {
             for (LBS lbs : lbss) {
-            	List<TPL> aendTPL = ptp_sectionMap.get(lbs.getaEndPortrmUID());
-            	List<TPL> zendTPL = ptp_sectionMap.get(lbs.getzEndPortrmUID());
+            	List<String> aendTPL = ptp_sectionMap.get(lbs.getaEndPortrmUID());
+            	List<String> zendTPL = ptp_sectionMap.get(lbs.getzEndPortrmUID());
             	
             	if (Detect.notEmpty(aendTPL)) {
             		if (!Detect.onlyOne(aendTPL)) {
                 		getLogger().error("aendTPL.size>1-" + lbs.getaEndPortrmUID());
                 		System.out.println("aendTPL.size>1-" + lbs.getaEndPortrmUID());
                 	}
-            		String sectionDn = aendTPL.get(0).getRmUID();
-            		CTunnel_Section cts = transTunnelSectionForSpn(lbs.getTunnelrmUID(), sectionDn);
-    				if (!DatabaseUtil.isSIDExisted(CTunnel_Section.class, cts.getDn())) // section+tunnel 可能有重复
-    					di.insert(cts);
+            		for (String sectionDn : aendTPL) {
+                		CTunnel_Section cts = transTunnelSectionForSpn(lbs.getTunnelrmUID(), sectionDn);
+        				if (!DatabaseUtil.isSIDExisted(CTunnel_Section.class, cts.getDn())) // section+tunnel 可能有重复
+        					di.insert(cts);
+            		}
             	}
             	if (Detect.notEmpty(zendTPL)) {
             		if (!Detect.onlyOne(zendTPL)) {
                 		getLogger().error("zendTPL.size>1-" + lbs.getzEndPortrmUID());
                 		System.out.println("zendTPL.size>1-" + lbs.getzEndPortrmUID());
                 	}
-            		String sectionDn = zendTPL.get(0).getRmUID();
-            		CTunnel_Section cts = transTunnelSectionForSpn(lbs.getTunnelrmUID(), sectionDn);
-    				if (!DatabaseUtil.isSIDExisted(CTunnel_Section.class, cts.getDn())) // section+tunnel 可能有重复
-    					di.insert(cts);
+            		for (String sectionDn : zendTPL) {
+                		CTunnel_Section cts = transTunnelSectionForSpn(lbs.getTunnelrmUID(), sectionDn);
+        				if (!DatabaseUtil.isSIDExisted(CTunnel_Section.class, cts.getDn())) // section+tunnel 可能有重复
+        					di.insert(cts);
+            		}
             	}
             }
         }
         di.end();
+        if (ptp_sectionMap != null) {
+        	ptp_sectionMap.clear();
+        	ptp_sectionMap = null;
+		}
     }
     private CTunnel_Section transTunnelSectionForSpn(String tunnelDn, String sectionDn) {
     	CTunnel_Section ts = new CTunnel_Section();
