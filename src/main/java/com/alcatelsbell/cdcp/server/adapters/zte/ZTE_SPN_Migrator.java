@@ -260,6 +260,23 @@ public class ZTE_SPN_Migrator extends AbstractDBFLoader{
 		};
     }
 
+    // <-- 以下是新接口厂商定制入库方法 -->
+    public CPTP transPRTForSpn(PRT ptp) {
+    	CPTP cptp = super.transPRTForSpn(ptp);
+    	// 中兴端口子类型字典值转换
+    	cptp.setPortSubType(ZTEDicUtil.getSpnPortSubType(ptp.getPortSubType()));
+    	
+    	return cptp;
+    }
+    
+    public CPW transPwForSpn(PSW pw) {
+    	CPW cpw = super.transPwForSpn(pw);
+    	// 中兴伪线两端端口从tprmuid取
+    	cpw.setAptp(pw.getaEndTprmUID());
+    	cpw.setZptp(pw.getzEndTprmUID());
+    	
+    	return cpw;
+    }
 
     // <-- 以下是新接口入库方法 -->
     /**
