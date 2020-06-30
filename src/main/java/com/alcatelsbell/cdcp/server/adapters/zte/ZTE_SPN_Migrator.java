@@ -132,6 +132,10 @@ import com.alcatelsbell.nms.valueobject.BObject;
  * Time: 下午4:43
  */
 public class ZTE_SPN_Migrator extends AbstractDBFLoader{
+	
+	HashMap<String,String> psw_ethMap = new HashMap<String, String>();
+	HashMap<String,HashMap<String,String>> eth_nelPrtMap = new HashMap<String,HashMap<String,String>>();
+	HashMap<String,String> psw_tdmprtMap = new HashMap<String, String>();
 
     public ZTE_SPN_Migrator(String fileUrl, String emsdn) {
         this.fileUrl = fileUrl;
@@ -229,7 +233,12 @@ public class ZTE_SPN_Migrator extends AbstractDBFLoader{
         
         logAction("migratePw", "同步伪线", 57);
         System.out.println("7.同步伪线");
+        getMaps();
         migratePwForSpn();
+        psw_ethMap.clear();
+        psw_ethMap = null;
+        eth_nelPrtMap.clear();
+        eth_nelPrtMap = null;
         
         logAction("migrateTunnel", "同步隧道", 58);
         System.out.println("8.同步隧道");
@@ -269,11 +278,98 @@ public class ZTE_SPN_Migrator extends AbstractDBFLoader{
     	return cptp;
     }
     
+    public void getMaps() {
+    	// psw_ethMap
+    	if (!isTableHasData(ESI.class)){
+			getLogger().info("ESI is empty, return...");
+			return;
+		}
+    	List<ESI> esis = sd.queryAll(ESI.class);
+        if (esis != null && esis.size() > 0) {
+            for (ESI esi : esis) {
+            	psw_ethMap.put(esi.getPwrmUID(), esi.getRmUID());
+            }
+        }
+        if (!Detect.notEmpty(psw_ethMap)) {
+        	getLogger().info("psw_ethMap is empty...");
+        }
+        
+        // eth_nelPrtMap
+        if (!isTableHasData(ESP.class)){
+			getLogger().info("ESP is empty, return...");
+			return;
+		}
+    	List<ESP> esps = sd.queryAll(ESP.class);
+        if (esps != null && esps.size() > 0) {
+            for (ESP esp : esps) {
+            	HashMap<String,String> nel_prtMap = eth_nelPrtMap.get(esp.getServicermUID());
+            	if (Detect.notEmpty(nel_prtMap)) {
+            		nel_prtMap.put(esp.getNermUID(), esp.getPortrmUID());
+            	} else {
+            		nel_prtMap = new HashMap<String, String>();
+            		nel_prtMap.put(esp.getNermUID(), esp.getPortrmUID());
+                	eth_nelPrtMap.put(esp.getServicermUID(), nel_prtMap);
+            	}
+            }
+        }
+        if (!Detect.notEmpty(eth_nelPrtMap)) {
+        	getLogger().info("eth_nelPrtMap is empty...");
+        }
+        
+        // psw_tdmprtMap
+        if (!isTableHasData(TDM.class)){
+			getLogger().info("TDM is empty, return...");
+			return;
+		}
+    	List<TDM> tdms = sd.queryAll(TDM.class);
+        if (tdms != null && tdms.size() > 0) {
+            for (TDM tdm : tdms) {
+            	String prt_prt = tdm.getaEnd1PortrmUID() + "::" + tdm.getzEnd1PortrmUID();
+            	if (Detect.notEmpty(tdm.getPW1rmUID()) && !"--".equals(tdm.getPW1rmUID())) {
+            		psw_tdmprtMap.put(tdm.getPW1rmUID(), prt_prt);
+            	}
+            	if (Detect.notEmpty(tdm.getPW2rmUID()) && !"--".equals(tdm.getPW2rmUID())) {
+            		psw_tdmprtMap.put(tdm.getPW2rmUID(), prt_prt);
+            	}
+            	if (Detect.notEmpty(tdm.getPW3rmUID()) && !"--".equals(tdm.getPW3rmUID())) {
+            		psw_tdmprtMap.put(tdm.getPW3rmUID(), prt_prt);
+            	}
+            }
+        }
+        if (!Detect.notEmpty(psw_tdmprtMap)) {
+        	getLogger().info("psw_tdmprtMap is empty...");
+        }
+    	
+    }
+    
     public CPW transPwForSpn(PSW pw) {
     	CPW cpw = super.transPwForSpn(pw);
-    	// 中兴伪线两端端口从tprmuid取
-    	cpw.setAptp(pw.getaEndTprmUID());
-    	cpw.setZptp(pw.getzEndTprmUID());
+    	if (Detect.notEmpty(psw_ethMap) && Detect.notEmpty(eth_nelPrtMap)) {
+    		String rmuid = pw.getRmUID();
+        	String eth = psw_ethMap.get(rmuid);
+        	if (Detect.notEmpty(eth)) { // 伪线关联ETH业务
+        		HashMap<String,String> nel_prt = eth_nelPrtMap.get(eth);
+        		if (Detect.notEmpty(nel_prt)) {
+        			cpw.setAptp(nel_prt.get(pw.getaEndNermUID()));
+            		cpw.setZptp(nel_prt.get(pw.getzEndNermUID()));
+        		} else {
+        			getLogger().error("nel_prt is empty..." + eth);
+        		}
+        	} else if (Detect.notEmpty(psw_tdmprtMap)) { // 伪线关联TDM业务
+        		String prt_prt = psw_tdmprtMap.get(pw.getRmUID());
+        		if (Detect.notEmpty(prt_prt)) {
+        			String[] ports = StringUtils.split(prt_prt, "::");
+        			cpw.setAptp(ports[0]);
+        			cpw.setZptp(ports[1]);
+        		} else {
+        			getLogger().error("伪线既不是ETH业务，也不是TDM业务：" + pw.getRmUID());
+        		}
+        	} else {
+    			getLogger().error("psw_tdmprtMap is null：" + pw.getRmUID());
+    		}
+    	} else {
+    		getLogger().error("map are null：" + pw.getRmUID());
+    	}
     	
     	return cpw;
     }
