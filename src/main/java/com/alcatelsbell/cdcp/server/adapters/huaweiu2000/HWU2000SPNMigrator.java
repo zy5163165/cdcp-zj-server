@@ -189,7 +189,7 @@ public class HWU2000SPNMigrator extends AbstractDBFLoader{
     	System.out.println("华为SPN入库-HWU2000SPNMigrator");
 //        testTime();
     	logAction(emsdn + " SpnMigrateStart", "SPN同步开始", 0);
-        
+    	
     	// 不做处理直接入库的对象，都放到BOMap和COMap里
     	HashMap<String,Object> boMap = getBOMap();
     	int i = 1;
@@ -295,10 +295,10 @@ public class HWU2000SPNMigrator extends AbstractDBFLoader{
             for (ESP esp : esps) {
             	HashMap<String,String> nel_prtMap = eth_nelPrtMap.get(esp.getServicermUID());
             	if (Detect.notEmpty(nel_prtMap)) {
-            		nel_prtMap.put(esp.getNermUID(), esp.getPortrmUID());
+            		nel_prtMap.put(esp.getNermUID(), esp.getPortrmUID() + "|" + esp.getCVID());
             	} else {
             		nel_prtMap = new HashMap<String, String>();
-            		nel_prtMap.put(esp.getNermUID(), esp.getPortrmUID());
+            		nel_prtMap.put(esp.getNermUID(), esp.getPortrmUID() + "|" + esp.getCVID());
                 	eth_nelPrtMap.put(esp.getServicermUID(), nel_prtMap);
             	}
             }
@@ -334,6 +334,7 @@ public class HWU2000SPNMigrator extends AbstractDBFLoader{
     }
     
     public CPW transPwForSpn(PSW pw) {
+
     	CPW cpw = super.transPwForSpn(pw);
     	if (Detect.notEmpty(psw_ethMap) && Detect.notEmpty(eth_nelPrtMap) && Detect.notEmpty(psw_tdmprtMap)) {
     		String rmuid = pw.getRmUID();
@@ -341,8 +342,36 @@ public class HWU2000SPNMigrator extends AbstractDBFLoader{
         	if (Detect.notEmpty(eth)) { // 伪线关联ETH业务
         		HashMap<String,String> nel_prt = eth_nelPrtMap.get(eth);
         		if (Detect.notEmpty(nel_prt)) {
-        			cpw.setAptp(nel_prt.get(pw.getaEndNermUID()));
-            		cpw.setZptp(nel_prt.get(pw.getzEndNermUID()));
+        			String[] aprt = StringUtils.split(nel_prt.get(pw.getaEndNermUID()), "|");
+        			if (Detect.notEmpty(aprt) && aprt.length == 2) {
+        				String aptp = aprt[0];
+        				if (Detect.notEmpty(aptp) && !"--".equals(aptp)) {
+        					cpw.setAptp(aptp);
+            			}
+            			String avlan = aprt[1];
+            			if (Detect.notEmpty(avlan) && !"--".equals(avlan)) {
+            				cpw.setAvlanId(avlan);
+            			}
+        			} else {
+//        				System.out.println("Anel_prt error:" + pw.getaEndNermUID());
+//        				getLogger().error("Anel_prt error:" + pw.getaEndNermUID());
+        			}
+        			
+        			String[] zprt = StringUtils.split(nel_prt.get(pw.getzEndNermUID()), "|");
+        			if (Detect.notEmpty(zprt) && zprt.length == 2) {
+        				String zptp = zprt[0];
+        				if (Detect.notEmpty(zptp) && !"--".equals(zptp)) {
+        					cpw.setZptp(zptp);
+            			}
+            			String zvlan = zprt[1];
+            			if (Detect.notEmpty(zvlan) && !"--".equals(zvlan)) {
+            				cpw.setZvlanId(zvlan);
+            			}
+        			} else {
+//        				System.out.println("Znel_prt error:" + pw.getzEndNermUID());
+//        				getLogger().error("Znel_prt error:" + pw.getzEndNermUID());
+        			}
+        			
         		} else {
         			getLogger().error("nel_prt is empty..." + eth);
         		}
@@ -350,8 +379,12 @@ public class HWU2000SPNMigrator extends AbstractDBFLoader{
         		String prt_prt = psw_tdmprtMap.get(pw.getRmUID());
         		if (Detect.notEmpty(prt_prt)) {
         			String[] ports = StringUtils.split(prt_prt, "::");
-        			cpw.setAptp(ports[0]);
-        			cpw.setZptp(ports[1]);
+        			if (Detect.notEmpty(ports[0]) && !"--".equals(ports[0])) {
+        				cpw.setAptp(ports[0]);
+        			}
+        			if (Detect.notEmpty(ports[1]) && !"--".equals(ports[1])) {
+        				cpw.setZptp(ports[1]);
+        			}
         		} else {
         			getLogger().error("伪线既不是ETH业务，也不是TDM业务：" + pw.getRmUID());
         		}

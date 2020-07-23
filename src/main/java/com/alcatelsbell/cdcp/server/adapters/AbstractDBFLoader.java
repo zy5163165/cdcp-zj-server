@@ -3332,8 +3332,13 @@ public abstract class AbstractDBFLoader {
     	cpw.setActiveState(pw.getActiveState());
     	cpw.setAend(pw.getaEndTprmUID());
     	cpw.setZend(pw.getzEndTprmUID());
-    	cpw.setAptp(pw.getaEndPortrmUID());
-		cpw.setZptp(pw.getzEndPortrmUID());
+    	if (!"--".equals(pw.getaEndPortrmUID())) {
+    		cpw.setAptp(pw.getaEndPortrmUID());
+    	}
+    	if (!"--".equals(pw.getzEndPortrmUID())) {
+    		cpw.setZptp(pw.getzEndPortrmUID());
+    	}
+		
         if (cpw.getAptp() != null)
 		    cpw.setAptpId(DatabaseUtil.getSID(CPTP.class, cpw.getAptp()));
         else {
