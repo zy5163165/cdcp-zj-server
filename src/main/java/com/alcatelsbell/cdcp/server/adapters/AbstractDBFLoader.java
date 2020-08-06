@@ -13,6 +13,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.persistence.EntityManager;
@@ -3418,6 +3419,7 @@ public abstract class AbstractDBFLoader {
     	return ctunnel;
     }
     // c_pw_tunnel
+    HashMap<String, String> tunnel_pwMap = new HashMap<String, String>();
     public void migratePwTunnelForSpn() throws Exception {
     	if (!isTableHasData(PWT.class)){
 			getLogger().info("PWT is empty, return...");
@@ -3429,26 +3431,31 @@ public abstract class AbstractDBFLoader {
         List<CPW_Tunnel> cpw_tunnels = new ArrayList<CPW_Tunnel>();
         if (pwts != null && pwts.size() > 0) {
             for (PWT pwt : pwts) {
-            	CPW_Tunnel cpw_tunnel = transCPW_TunnelForSpn(pwt);
+            	CPW_Tunnel cpw_tunnel = transCPW_TunnelForSpn(pwt.getRmUID(), pwt.getTunnelrmUID(), pwt);
             	cpw_tunnels.add(cpw_tunnel);
+            	tunnel_pwMap.put(pwt.getTunnelrmUID(), pwt.getRmUID());
             }
         }
         removeDuplicateDN(cpw_tunnels);
         di.insert(cpw_tunnels);
         di.end();
     }
-    protected CPW_Tunnel transCPW_TunnelForSpn(PWT pwt) {
+    protected CPW_Tunnel transCPW_TunnelForSpn(String pwRmuid, String tunnelRmuid, PWT pwt) {
 		CPW_Tunnel cpw_tunnel = new CPW_Tunnel();
-		cpw_tunnel.setDn(pwt.getRmUID() + "<>" + pwt.getTunnelrmUID());
+		cpw_tunnel.setDn(pwRmuid + "<>" + tunnelRmuid);
 		cpw_tunnel.setSid(DatabaseUtil.nextSID(cpw_tunnel));
-		cpw_tunnel.setCollectTimepoint(pwt.getCreateDate());
+		if (pwt != null) {
+			cpw_tunnel.setCollectTimepoint(pwt.getCreateDate());
+		} else {
+			cpw_tunnel.setCollectTimepoint(new Date());
+		}
 		cpw_tunnel.setEmsName(emsdn);
 		cpw_tunnel.setEmsid(emsid);
 		
-		cpw_tunnel.setPwDn(pwt.getRmUID());
-		cpw_tunnel.setPwId(DatabaseUtil.getSID(CPW.class, pwt.getRmUID()));
-		cpw_tunnel.setTunnelDn(pwt.getTunnelrmUID());
-		cpw_tunnel.setTunnelId(DatabaseUtil.getSID(CTunnel.class, pwt.getTunnelrmUID()));
+		cpw_tunnel.setPwDn(pwRmuid);
+		cpw_tunnel.setPwId(DatabaseUtil.getSID(CPW.class, pwRmuid));
+		cpw_tunnel.setTunnelDn(tunnelRmuid);
+		cpw_tunnel.setTunnelId(DatabaseUtil.getSID(CTunnel.class, tunnelRmuid));
 
 		return cpw_tunnel;
 	}
@@ -3484,6 +3491,7 @@ public abstract class AbstractDBFLoader {
 		return cpg;
 	}
     // c_protectiongroup_tunnel
+    HashMap<String, List<String>> tpi_tunnelMap = new HashMap<String, List<String>>();
     public void migrateProtectiongroupTunnelForSpn() throws Exception {
     	if (!isTableHasData(TPB.class)){
 			getLogger().info("TPB is empty, return...");
@@ -3510,13 +3518,44 @@ public abstract class AbstractDBFLoader {
 					cProtectionGroupTunnel.setStatus(tpb.getRole());
 				}
 				
+				DSUtil.putIntoValueList(tpi_tunnelMap, tpb.getRmUID(), tpb.getTunnelrmUID());
+				
 				// 错误的pg导致DN重复
 				if (!DatabaseUtil.isSIDExisted(CProtectionGroupTunnel.class, cProtectionGroupTunnel.getDn())) {
 					di.insert(cProtectionGroupTunnel);
 				}
             }
         }
+        
+        if (Detect.notEmpty(tpi_tunnelMap) && Detect.notEmpty(tunnel_pwMap)) {
+        	List<CPW_Tunnel> cpw_tunnels = new ArrayList<CPW_Tunnel>();
+        	Set<String> tpis = tpi_tunnelMap.keySet();
+			for (String tpi : tpis) {
+				List<String> tunnels = tpi_tunnelMap.get(tpi);
+				if (Detect.notEmpty(tunnels) && tunnels.size() > 1) {
+					if (Detect.notEmpty(tunnel_pwMap.get(tunnels.get(0))) && !Detect.notEmpty(tunnel_pwMap.get(tunnels.get(1)))) {
+						CPW_Tunnel cpw_tunnel = transCPW_TunnelForSpn(tunnel_pwMap.get(tunnels.get(0)), tunnels.get(1), null);
+		            	cpw_tunnels.add(cpw_tunnel);
+					} else if (Detect.notEmpty(tunnel_pwMap.get(tunnels.get(1))) && !Detect.notEmpty(tunnel_pwMap.get(tunnels.get(0)))) {
+						CPW_Tunnel cpw_tunnel = transCPW_TunnelForSpn(tunnel_pwMap.get(tunnels.get(1)), tunnels.get(0), null);
+		            	cpw_tunnels.add(cpw_tunnel);
+					}
+				}
+			}
+			di.insert(cpw_tunnels);
+        } else {
+        	getLogger().error("tpi_tunnelMap or tunnel_pwMap is null");
+        }
+        
         di.end();
+        if (tpi_tunnelMap != null) {
+        	tpi_tunnelMap.clear();
+            tpi_tunnelMap = null;
+        }
+        if (tunnel_pwMap != null) {
+        	tunnel_pwMap.clear();
+            tunnel_pwMap = null;
+        }
     }
     // c_tunnel_section
     public void migrateTunnelSectionForSpn() throws Exception {
