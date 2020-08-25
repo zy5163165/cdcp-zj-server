@@ -3419,7 +3419,7 @@ public abstract class AbstractDBFLoader {
     	return ctunnel;
     }
     // c_pw_tunnel
-    HashMap<String, String> tunnel_pwMap = new HashMap<String, String>();
+    HashMap<String, List<String>> tunnel_pwMap = new HashMap<String, List<String>>();
     public void migratePwTunnelForSpn() throws Exception {
     	if (!isTableHasData(PWT.class)){
 			getLogger().info("PWT is empty, return...");
@@ -3433,7 +3433,7 @@ public abstract class AbstractDBFLoader {
             for (PWT pwt : pwts) {
             	CPW_Tunnel cpw_tunnel = transCPW_TunnelForSpn(pwt.getRmUID(), pwt.getTunnelrmUID(), pwt);
             	cpw_tunnels.add(cpw_tunnel);
-            	tunnel_pwMap.put(pwt.getTunnelrmUID(), pwt.getRmUID());
+            	DSUtil.putIntoValueList(tunnel_pwMap, pwt.getTunnelrmUID(), pwt.getRmUID());
             }
         }
         removeDuplicateDN(cpw_tunnels);
@@ -3528,21 +3528,31 @@ public abstract class AbstractDBFLoader {
         }
         
         if (Detect.notEmpty(tpi_tunnelMap) && Detect.notEmpty(tunnel_pwMap)) {
-        	List<CPW_Tunnel> cpw_tunnels = new ArrayList<CPW_Tunnel>();
         	Set<String> tpis = tpi_tunnelMap.keySet();
 			for (String tpi : tpis) {
 				List<String> tunnels = tpi_tunnelMap.get(tpi);
 				if (Detect.notEmpty(tunnels) && tunnels.size() > 1) {
 					if (Detect.notEmpty(tunnel_pwMap.get(tunnels.get(0))) && !Detect.notEmpty(tunnel_pwMap.get(tunnels.get(1)))) {
-						CPW_Tunnel cpw_tunnel = transCPW_TunnelForSpn(tunnel_pwMap.get(tunnels.get(0)), tunnels.get(1), null);
-		            	cpw_tunnels.add(cpw_tunnel);
+						for (String pwDn : tunnel_pwMap.get(tunnels.get(0))) {
+							CPW_Tunnel cpw_tunnel = transCPW_TunnelForSpn(pwDn, tunnels.get(1), null);
+							// DN重复
+							if (!DatabaseUtil.isSIDExisted(CPW_Tunnel.class, cpw_tunnel.getDn())) {
+								di.insert(cpw_tunnel);
+							}
+						}
 					} else if (Detect.notEmpty(tunnel_pwMap.get(tunnels.get(1))) && !Detect.notEmpty(tunnel_pwMap.get(tunnels.get(0)))) {
-						CPW_Tunnel cpw_tunnel = transCPW_TunnelForSpn(tunnel_pwMap.get(tunnels.get(1)), tunnels.get(0), null);
-		            	cpw_tunnels.add(cpw_tunnel);
+						for (String pwDn : tunnel_pwMap.get(tunnels.get(1))) {
+							CPW_Tunnel cpw_tunnel = transCPW_TunnelForSpn(pwDn, tunnels.get(0), null);
+							// DN重复
+							if (!DatabaseUtil.isSIDExisted(CPW_Tunnel.class, cpw_tunnel.getDn())) {
+								di.insert(cpw_tunnel);
+							}
+						}
+					} else {
+						getLogger().error("both tunnel have pw : " + tunnels.get(0));
 					}
 				}
 			}
-			di.insert(cpw_tunnels);
         } else {
         	getLogger().error("tpi_tunnelMap or tunnel_pwMap is null");
         }
