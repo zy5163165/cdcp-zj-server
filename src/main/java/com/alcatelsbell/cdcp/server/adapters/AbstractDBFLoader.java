@@ -3535,21 +3535,15 @@ public abstract class AbstractDBFLoader {
 					if (Detect.notEmpty(tunnel_pwMap.get(tunnels.get(0))) && !Detect.notEmpty(tunnel_pwMap.get(tunnels.get(1)))) {
 						for (String pwDn : tunnel_pwMap.get(tunnels.get(0))) {
 							CPW_Tunnel cpw_tunnel = transCPW_TunnelForSpn(pwDn, tunnels.get(1), null);
-							// DN重复
-							if (!DatabaseUtil.isSIDExisted(CPW_Tunnel.class, cpw_tunnel.getDn())) {
-								di.insert(cpw_tunnel);
-							}
+							di.insert(cpw_tunnel);
 						}
 					} else if (Detect.notEmpty(tunnel_pwMap.get(tunnels.get(1))) && !Detect.notEmpty(tunnel_pwMap.get(tunnels.get(0)))) {
 						for (String pwDn : tunnel_pwMap.get(tunnels.get(1))) {
 							CPW_Tunnel cpw_tunnel = transCPW_TunnelForSpn(pwDn, tunnels.get(0), null);
-							// DN重复
-							if (!DatabaseUtil.isSIDExisted(CPW_Tunnel.class, cpw_tunnel.getDn())) {
-								di.insert(cpw_tunnel);
-							}
+							di.insert(cpw_tunnel);
 						}
 					} else {
-						getLogger().error("both tunnel have pw : " + tunnels.get(0));
+						getLogger().error("both tunnel have or dont have pw : " + tunnels.get(0));
 					}
 				}
 			}
