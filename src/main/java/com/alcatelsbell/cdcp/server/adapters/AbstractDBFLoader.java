@@ -3617,5 +3617,35 @@ public abstract class AbstractDBFLoader {
 		return ts;
     }
     
+    public HashMap<String,String> getSkipMap() {
+    	HashMap<String,String> map = new HashMap<String,String>();
+    	
+    	map.put("BRD", "");
+    	map.put("L3I", "");
+    	map.put("L3P", "");
+    	map.put("L3T", "");
+    	map.put("STT", "");
+    	map.put("SRT", "");
+    	map.put("SRR", "");
+    	map.put("IGT", "");
+    	map.put("IGL", "");
+    	map.put("NWS", "");
+    	
+    	map.put("MGP", "");
+    	map.put("MGB", "");
+    	map.put("MCL", "");
+    	map.put("MCS", "");
+    	map.put("MCP", "");
+    	map.put("MCB", "");
+    	
+//    	map.put("FEG", "");
+//    	map.put("FCB", "");
+//    	map.put("FEC", "");
+//    	map.put("FES", "");
+//    	map.put("FCP", "");
+//    	map.put("FCB", "");
+    	
+    	return map;
+    }
 	
 }

@@ -291,9 +291,54 @@ public class FHOTNM2000SPNMigrator extends AbstractDBFLoader{
 		
 		// 插入新数据
 		if (Detect.notEmpty(cdcpList)) {
-			DataInserter di = new DataInserter(emsid);
-			di.insert(cdcpList);
-			di.end();
+			List<CdcpObject> newCdcpList = new ArrayList<CdcpObject>();
+			// 指定对象过滤重复rmuid/dn
+			HashMap<String,String> skipMap = getSkipMap();
+			if (skipMap.containsKey(key)) {
+				List<String> rmuids = new ArrayList<String>();
+				int count = 0;
+				for (CdcpObject cdcp : cdcpList) {
+					String rmuid = cdcp.getDn();
+					if ("L3T".equals(key)) { // L3T使用复合主键
+						CL3T l3t = (CL3T) cdcp;
+						rmuid = l3t.getDn() + "-" + l3t.getTunnelrmUID();
+					}
+					if ("MGB".equals(key)) { // MGB使用复合主键
+						CMGB mgb = (CMGB) cdcp;
+						rmuid = mgb.getDn() + "-" + mgb.getPhyPortrmUID();
+					}
+					if (!Detect.notEmpty(cdcp.getDn())) {
+						count ++;
+//						getLogger().error("对象:" + key + "-空的rmuid:" + cdcp.getDn());
+						continue;
+					}
+					if (rmuids.contains(rmuid)) {
+						getLogger().error("对象:" + key + "-重复的rmuid:" + rmuid);
+					} else {
+						rmuids.add(rmuid);
+						newCdcpList.add(cdcp);
+					}
+				}
+				if (count > 0 ) {
+					getLogger().error("对象:" + key + "-空的rmuid:" + count);
+				}
+			} else {
+				newCdcpList.addAll(cdcpList);
+			}
+			
+			if (Detect.notEmpty(newCdcpList)) {
+				DataInserter di = new DataInserter(emsid);
+				try {
+					di.insert(newCdcpList);
+				} catch (Exception e) {
+					getLogger().error("对象:" + key + ":插入中间表出错:" + e.getMessage());
+					e.printStackTrace();
+				}
+				di.end();
+			} else {
+				getLogger().error("过滤后newCdcpList is null...");
+			}
+			
 		} else {
 			getLogger().error("cdcpList is null...");
 		}
